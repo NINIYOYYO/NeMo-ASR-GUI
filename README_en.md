@@ -1,58 +1,73 @@
-Here is the complete English translation of the `README.md`, tailored for your `README_en.md` file.
-
----
-
-# Parakeet-TDT GUI - Intelligent Video/Audio Subtitle Generator
+# Parakeet-TDT-GUI: Intelligent Speech Transcription & Subtitle Workstation
 
 <p align="center">
-  <a href="./README.md">简体中文</a>
-  <a href="./README_ko.md">한국어</a>
+  <img src="https://img.shields.io/badge/Model-NVIDIA%20Parakeet-green" alt="Model">
+  <img src="https://img.shields.io/badge/Framework-NeMo%20%2F%20Gradio-orange" alt="Framework">
+  <img src="https://img.shields.io/badge/License-MIT-blue" alt="License">
+</p>
+
+<p align="center">
+  <a href="./README">中文</a>
+  <a href="./README_ko.md">한국어</a> 
   <a href="./README_ja.md">日本語</a>
 </p>
 
-This project is a modern GUI tool based on the **NVIDIA NeMo** framework, encapsulating the powerful **Parakeet-TDT** series ASR (Automatic Speech Recognition) models. It automatically recognizes speech in video or audio files and generates **SRT subtitle files** with precise timestamps.
+**Parakeet-TDT-GUI** is a powerful, locally-deployed audio-visual processing workstation. Based on the **NVIDIA NeMo** framework and the **Parakeet-TDT** model series, it not only provides ultra-fast, high-precision Automatic Speech Recognition (ASR) but also integrates **LLM (Large Language Model) translation**, **intelligent segmentation**, and a **visual subtitle proofreading editor**.
 
-Refactored with a modular design, this project supports a **multi-language interface**, **batch file processing**, and **multi-model switching**, aiming to provide users with the most convenient localized subtitle generation experience.
+This project aims to provide a one-stop "transcribe-proofread-translate-export" solution for fansub groups, video creators, and language learners.
 
 ## ✨ Core Features
 
-*   **Multi-language Interface**: Built-in Internationalization (I18n) support. Switch between **Chinese / English / Japanese / Korean** with one click.
-*   **Multi-format Output**: Supports generating various subtitle and text formats:
-    *   `SRT`: The most widely used standard movie subtitle format.
-    *   `VTT`: Web video (HTML5) standard subtitle format.
-    *   `ASS`: Advanced subtitle format supporting styles, effects, and positioning (optimized for HD resolution).
-    *   `LRC`: Synchronized lyric format for music players.
-    *   `TXT / JSON`: Plain text or structured data, convenient for post-processing, archiving, or API integration.
-*   **Universal Media Processing**: Unified entry for all media types. Supports direct uploading of **MP4, MKV, AVI, MP3, WAV, FLAC**, and almost all common formats.
-*   **Batch Transcription**: Supports uploading multiple files at once with automatic queue processing for high efficiency.
-*   **Multi-Model Support**:
-    *   `nvidia/parakeet-tdt-0.6b-v2`: Balanced performance, excellent for English.
-    *   `nvidia/parakeet-tdt_ctc-110m`: Lightweight model with extremely fast inference speed.
-    *   `nvidia/parakeet-tdt-0.6b-v3`: Stronger multilingual capabilities (supports 20+ European languages).
-    *   `nvidia/parakeet-tdt_ctc-0.6b-ja`: "Japanese model, supports Japanese transcription."
-*   **Flexible Deployment**:
-    *   **Cloud Loading**: Download and load the latest models directly from NVIDIA NGC.
-    *   **Local Loading**: Supports loading existing local `.nemo` model files to avoid repeated downloads.
-*   **Smart Hardware Acceleration**: Automatically detects NVIDIA GPU (CUDA) and prioritizes GPU acceleration; automatically falls back to CPU if no GPU is found.
-*   **Configuration Persistence**: Automatically saves your last used model, chunk settings, and language preferences.
+### 1. Ultimate Transcription (ASR)
+*   **Multi-Model Support**: Integrates NVIDIA's latest Parakeet TDT series models:
+    *   `0.6b-v2`: Strongest comprehensive ability for English recognition.
+    *   `0.6b-v3`: Supports **20+ languages** (English, German, French, Russian, Japanese, Spanish, etc.).
+    *   `ctc-110m`: Ultra-lightweight, extremely fast inference with low VRAM usage.
+    *   `0.6b-ja`: Specialized model optimized for **Japanese**.
+*   **Multi-Format Export**: Supports exporting to `SRT`, `VTT`, `ASS` (styled subtitles), `LRC` (lyrics), `TXT`, and `JSON`.
+*   **Microsecond Precision**: Supports **Word-level** and **Character-level** timestamp output, perfect for Karaoke effects or precise alignment.
+*   **Smart Typography**: Built-in intelligent splitting logic allowing limits on the maximum character count per line to prevent overly long subtitles.
 
-## 🛠 Requirements
+### 2. LLM Intelligent Translation
+*   **Multi-Model Compatibility**: Compatible with OpenAI format interfaces (supports **DeepSeek**, **ChatGPT**, **Claude**, etc.) and Google Gemini native interfaces.
+*   **Bilingual Subtitles**: Supports generating "Original + Translation" bilingual subtitles.
+*   **Anti-Misalignment Algorithm**: Uses ID-Mapping technology to completely solve issues regarding line count mismatch and timestamp misalignment often found in LLM translations.
+*   **High Concurrency**: Supports multi-threaded concurrent translation to significantly boost processing speed for long videos.
 
-*   **Python**: 3.10 or higher (3.12 recommended).
-*   **FFmpeg**: **Must be installed separately** and configured in the system environment variables (used for media format conversion and audio extraction).
-*   **NVIDIA GPU**: (Highly Recommended) An NVIDIA graphics card with 4GB+ VRAM and CUDA drivers installed.
+### 3. Visual Subtitle Editor
+*   **Proofreading Table**: An Excel-like interface to modify timestamps and text directly on the web page.
+*   **Batch Correction**: Supports defining an "Error-Correct" mapping table (e.g., unifying "Parakeet" to "Parrot"), allowing one-click batch replacement across the entire text.
+*   **Proofreading Memory**: Automatically saves your proofreading rules, becoming more efficient the more you use it.
+
+### 4. AI Intelligent Segmentation
+*   Targeting large blocks of un-broken text generated by ASR, this feature uses LLM semantic understanding to intelligently split text and automatically match the original timestamps, creating short-sentence subtitles that fit human reading habits.
+
+
+---
+
+## System Requirements
+
+*   **Operating System**: Windows / Linux
+*   **Python**: 3.10 - 3.12
+*   **Graphics Card**: NVIDIA GPU with **4GB+ VRAM** recommended (CUDA support required).
+    *   *Note: CPU mode is available if no GPU is present, but it will be slower.*
+*   **FFmpeg**: **Must be installed** and configured in the system environment variables (used for audio extraction).
+### Installation Prerequisite: If dependency installation fails on Windows, please ensure your computer has **Visual Studio** installed to handle compilation.
+
+
+---
 
 ## 🚀 Installation Guide (Windows)
 
 ### Method 1: Using Batch Script (Recommended for Beginners)
 
-1.  **Clone/Download** this project to your local machine.
+1.  **Clone/Download this project** to your local machine.
 2.  Double-click to run **`install_dependencies.bat`**.
     *   The script will automatically create a Python virtual environment.
     *   It will automatically install the required dependencies.
 3.  Once installation is complete, double-click **`launcher.bat`** to start the program.
 
-> **Note**: If you need GPU acceleration, it is recommended to refer to "Method 2" to manually install PyTorch to ensure the CUDA version matches your system.
+> **Note**: If you require GPU acceleration, it is suggested to refer to "Method 2" to manually install PyTorch to ensure the CUDA version matches.
 
 ### Method 2: Manual Command Line Installation (Recommended)
 
@@ -71,104 +86,123 @@ Refactored with a modular design, this project supports a **multi-language inter
     source .venv/bin/activate
     ```
 
-3.  **Install PyTorch (Crucial Step):**
-    If you wish to use NVIDIA GPU acceleration (Highly Recommended), **you must install a PyTorch version compatible with your CUDA environment before installing other dependencies.**
-    *   Press `Win+R`, type `cmd`, and press Enter.
-    *   Type `nvidia-smi` and press Enter to check your **CUDA Version**.
-    *   Visit the [PyTorch Get Started Page](https://pytorch.org/get-started/locally/).
-    *   Select your OS, Package Manager (pip), and the Compute Platform matching your CUDA version (e.g., CUDA 11.8, CUDA 12.1).
-    *   *Example command for CUDA 12.1:*
+3.  **Install PyTorch (Important: GPU Users Pay Attention!):**
+    If you wish to use an NVIDIA GPU for accelerated processing (highly recommended), **please strictly install a PyTorch version compatible with your CUDA environment before installing other dependencies.**
+    *   Press `Win+R` to open the Windows Run dialog, type `CMD` to enter the terminal, and type:
+    ```bash
+    nvidia-smi
+    ```
+    Press Enter to check your CUDA Version.
+    *   Visit the [PyTorch Official Installation Guide](https://pytorch.org/get-started/locally/).
+    *   Select the correct installation command based on your OS, package manager (recommend `pip`), compute platform (e.g., CUDA 11.8, CUDA 12.1), and Python version.
+    *   For example, if using `pip` and your system has CUDA 12.1 environment, run:
         ```bash
         pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
         ```
-    *If you skip this step, `nemo_toolkit` might default to a CPU-only version of PyTorch.*
+    If you skip this step, or if your system does not have an NVIDIA GPU, the subsequent installation of `nemo_toolkit` may default to installing a CPU-only version of PyTorch.
 
-4.  **Install Project Dependencies:**
+4.  **Install Other Project Dependencies:**
     ```bash
     pip install -r requirements.txt
     ```
 
 5.  **Install FFmpeg:**
-    *   **Windows**: Download a pre-compiled FFmpeg build, unzip it, and add the `bin` folder path to your system's `Path` environment variable.
-    *   Open a terminal and type `ffmpeg -version`. If version information is output, the installation is successful.
+    *   **Windows**: Download the FFmpeg pre-compiled package, unzip it, and add the path to the `bin` folder to your system's `Path` environment variables.
+    *   Open a terminal and type `ffmpeg -version`. If output is shown, the installation is successful.
 
-6.  **Run the Program:**
+6.  **Start the Program:**
     ```bash
     python main.py
     ```
-
+---    
 ## 📖 Usage Tutorial
 
-After the program starts, your browser will automatically open `http://127.0.0.1:7860`.
+### 1. Model Loading
+Go to the **"Model Settings"** area:
+*   **Cloud Model**: Select a model (e.g., `nvidia/parakeet-tdt-0.6b-v2`) and click Load. It will download automatically the first time (approx. 1-2GB).
+*   **Local Model**: Enter the absolute path of the `.nemo` file and click Load.
 
-### 1. Initial Setup & Language
-*   A language switching menu is available at the top of the interface. Select your preferred language (e.g., "English").
-*   The program will remember your choice.
+### 2. Transcription
+1.  Upload video/audio files (batch processing supported).
+2.  **Chunk Length**: Recommended 60-180 seconds.
+3.  **Output Format**: Check the desired formats (recommend `srt` and `ass`).
+4.  **Advanced Options**:
+    *   *Word/Char Level*: Check this if you need Karaoke effects.
+    *   *Smart Split*: Enable and set "Max Line Width" (e.g., 40 characters) to automatically split long sentences into two lines.
+5.  Click **"Start Generation"**.
 
-### 2. Load ASR Model
-You must load a model before using the transcription features.
+### 3. Subtitle Editing
+1.  In the **"Subtitle Edit"** tab, upload the SRT file generated just now.
+2.  **Batch Proofread**: Enter common errors and correct words in the "Proofreading Table" on the left, then click "Batch Replace".
+3.  **Manual Tweak**: Modify text or time directly in the table below.
+4.  Click **"Save Subtitle File"** to export the modified version.
 
-*   **Cloud Model (Recommended for first-time use)**:
-    1.  Select a model from the "Cloud Model Name" dropdown (e.g., `nvidia/parakeet-tdt-0.6b-v2`).
-    2.  Click the **"Load Cloud Model"** button.
-    3.  *Note: First-time loading involves downloading a 1-2GB model file. Please wait patiently.*
+### 4. AI Translation
+1.  Switch to the **"AI Translation"** tab.
+2.  Fill in the LLM Configuration:
+    *   **API Key**: Your OpenAI/DeepSeek/Gemini key.
+    *   **Base URL**: E.g., `https://api.deepseek.com` or `https://generativelanguage.googleapis.com/v1beta`.
+    *   **Model**: E.g., `deepseek-chat` or `gemini-3.0-flash`.
+3.  Set **Target Language** and **Bilingual** option.
+4.  Click Start, and the system will automatically translate in parallel and generate a new file.
 
-*   **Local Model**:
-    1.  If you already have a `.nemo` file, enter the absolute path in the "Local Model Path" input box.
-    *Example: `C:\Users\models\parakeet-tdt-0.6b-v2.nemo`*
-    2.  Click the **"Load Local Model"** button.
+### 5. AI Segmentation
+*   Suitable for cases where the ASR-generated subtitles have correct text but the timeline creates "one sentence that is too long".
+*   Upload the subtitle, configure the LLM, click Start, and the AI will re-segment the timeline based on semantics.
 
-### 3. Generate Subtitles
-1.  Switch to the **"Transcription"** tab.
-2.  Click the upload area and select one or **multiple** video or audio files.
-3.  (Optional) Adjust the **Chunk Length** slider.
-    *   *Recommended: 60-180 seconds. Longer chunks provide better context but require more VRAM.*
-4.  Click the **"Submit"** button.
-5.  The right/bottom side will display the current file name and processing progress in real-time.
-6.  Once completed, you can:
-    *   Click the link to download the generated `.srt` file.
-    *   Preview the subtitle content directly in the text box below.
+---
+## Interface Screenshot
+!["Interface"](./README.assets/2.png)
+
 
 ## 📂 Project Structure
 
 ```text
-.
-├── main.py                  # Program entry point
-├── application.py           # Core application assembly and service coordination
-├── app_ui.py                # Gradio UI construction logic
-├── config.json              # User configuration (Auto-generated)
-├── controllers/             # [MVC] Controller Layer: Handles business logic
-│   ├── model_controller.py
-│   └── transcription_controller.py
-├── core/                    # Core Functionality Layer
-│   ├── asr_service.py       # NeMo model loading and inference
-│   ├── audio_processor.py   # FFmpeg audio extraction and processing
-│   └── srt_generator.py     # SRT format generation
-├── interfaces/              # Abstract interface definitions
-├── utils/                   # Utilities
-│   ├── config_manager.py    # Configuration I/O
-│   ├── logger.py            # Logging system
-│   └── translator.py        # I18n translation management
-└── locales/                 # Multi-language translation files (zh.json, en.json...)
+D:\PROGRAMING\PARAKEET-TDT-0.6B-V2-SRT-GUI
+│  application.py           # Application core orchestration
+│  app_ui.py                # Gradio UI layout and interaction
+│  main.py                  # Startup entry point
+│  config.json              # User configuration file
+│  
+├─controllers/              # Business logic controllers
+│      model_controller.py
+│      subtitle_editor_controller.py
+│      transcription_controller.py
+│      translation_controller.py
+│      
+├─core/                     # Core services
+│      asr_service.py       # NeMo model inference wrapper
+│      audio_processor.py   # FFmpeg audio processing
+│      post_processors.py   # Post-processing strategies (Japanese optimization/Segmentation)
+│      subtitle_generator.py# Subtitle format generation (SRT/ASS/VTT etc.)
+│      translation_service.py # LLM translation and segmentation service
+│      
+├─interfaces/               # Interface definitions
+├─locales/                  # Multi-language interface translations
+├─subtitles/                # Output directory
+│  ├─edited/                # Edited subtitles
+│  └─translated/            # Translated subtitles
+│      
+└─utils/                    # Utilities (Logging, Config, Exceptions)
 ```
-
-## Screenshot
-![Interface](./README.assets/1.png)
 
 ## ⚠️ FAQ
 
-**Q: The interface freezes after clicking "Load Model"?**
-A: When loading a cloud model for the first time, it downloads a large file in the background. Please check the terminal (command line) window for a detailed download progress bar.
+**Q: Why are the generated subtitles garbled or do the timestamps overlap?**
+A: Please check if you are using a mismatched language model. For example, using an English model to transcribe Chinese audio will lead to unpredictable results. Please use `0.6b-v3` (Multilingual) or a specialized model.
 
-**Q: Error `FileNotFoundError: [WinError 2] The system cannot find the file specified`?**
-A: This usually means **FFmpeg** is not installed or its path is not added to the system environment variable `Path`.
+**Q: The translation feature returns error "429 Too Many Requests"?**
+A: This is an API rate limit. Please lower the **"Concurrency"** slider in the interface, or increase the **"Chunk Size"**.
 
-**Q: The program says it's running on CPU, but I have a GPU?**
-A: Please check if your PyTorch is the CUDA version. Enter `python` in the terminal, then type `import torch; print(torch.cuda.is_available())`. If it outputs `False`, please reinstall the GPU version of PyTorch.
+**Q: The program says FFmpeg cannot be found?**
+A: Please ensure that typing `ffmpeg` in CMD shows version information. If you just installed it, please restart your computer or IDE.
 
-**Q: Out of Memory (OOM)?**
-A: 1. Try reducing the "Chunk Length" slider. 2. Try selecting a model with fewer parameters (e.g., `ctc-110m`).
+**Q: What if I run out of VRAM (OOM)?**
+A: 1. Reduce the "Audio Chunk Length" (e.g., set to 30s). 2. Use a smaller model (`ctc-110m`).
 
-## 🤝 Contribution
+---
 
-Issues and Pull Requests are welcome to improve this project!
+## 🤝 Contribution & License
+
+This project is open-sourced under the MIT License. The copyright of the core models belongs to NVIDIA.
+Issues regarding bugs and Pull Requests for new features are welcome!

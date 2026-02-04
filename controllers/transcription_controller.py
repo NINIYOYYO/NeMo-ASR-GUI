@@ -3,6 +3,7 @@ import os
 import re
 import time
 from pathlib import Path
+import zipfile
 from interfaces import IASRService
 from interfaces import ITranscriptionController, IAudioService, ISubtitleGenerator
 from utils.exceptions import TranscriptionError
@@ -139,6 +140,44 @@ class TranscriptionController(ITranscriptionController):
             logger.info(status_message)
             yield status_message, output_files_all, generated_content_preview
     
+    def create_zip_archive(self, file_objs: list) -> str:
+        """将生成的文件打包成 ZIP"""
+        if not file_objs:
+            logger.warning("没有文件可打包")
+            return None
+
+        # 确保输出目录存在
+        if not os.path.exists(self.subtitles_folder_path):
+            os.makedirs(self.subtitles_folder_path, exist_ok=True)
+
+        # 生成带时间戳的 ZIP 文件名
+        timestamp = time.strftime("%Y%m%d_%H%M%S")
+        zip_filename = f"subtitles_package_{timestamp}.zip"
+        zip_path = os.path.join(self.subtitles_folder_path, zip_filename)
+
+        logger.info(f"开始打包 ZIP: {zip_path}")
+
+        try:
+            with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                for file_obj in file_objs:
+                    # Gradio 传回的文件对象通常是 NamedString 或具有 name 属性的对象
+                    # 如果是路径字符串，直接使用；如果是对象，取 .name
+                    file_path = file_obj.name if hasattr(file_obj, 'name') else file_obj
+                    
+                    if os.path.exists(file_path):
+                        # arcname 确保 ZIP 内部不包含绝对路径，只包含文件名
+                        zipf.write(file_path, arcname=os.path.basename(file_path))
+                    else:
+                        logger.warning(f"打包时文件未找到: {file_path}")
+            
+            logger.info(f"ZIP 打包成功: {zip_path}")
+            return zip_path
+        
+        except Exception as e:
+            logger.error(f"打包 ZIP 失败: {e}")
+            import traceback
+            traceback.print_exc()
+            return None
 
 
     def _sanitize_filename(self, filename: str) -> str:

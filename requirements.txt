@@ -4,3 +4,5 @@ pydub>=0.25.1
 
 # Gradio for the web interface
 gradio>=5.29.0
+
+openai==2.16.0

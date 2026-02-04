@@ -6,11 +6,16 @@ from interfaces import (
     IASRService,
     IModelController,
     ITranscriptionController,
+    
+    
 )
 
 # 导入控制器类
 from controllers.model_controller import ModelController
 from controllers.transcription_controller import TranscriptionController
+from controllers.subtitle_editor_controller import SubtitleEditorController
+from core.translation_service import TranslationService
+from controllers.translation_controller import TranslationController
 
 from app_ui import create_ui
 from utils.logger import logger
@@ -45,6 +50,17 @@ class Application(IApplication):
             subtitle_generator=self._subtitle_service,
         )
 
+        self._subtitle_editor_controller = SubtitleEditorController(
+            subtitle_service=self._subtitle_service
+        )
+
+        self._translation_service = TranslationService()
+        self._translation_controller = TranslationController(
+            subtitle_service=self._subtitle_service,
+            translation_service=self._translation_service,
+            config_manager=self._config_manager
+        )
+
     @property
     def asr_service(self) -> IASRService:
         """获取 ASR 服务实例。"""
@@ -74,6 +90,18 @@ class Application(IApplication):
     def transcription_controller(self) -> TranscriptionController:
         """获取转录控制器实例。"""
         return self._transcription_controller
+    
+    @property
+    def subtitle_editor_controller(self) -> SubtitleEditorController:
+        return self._subtitle_editor_controller
+    
+    @property
+    def translation_controller(self) -> TranslationController:
+        return self._translation_controller
+    
+    @property
+    def translation_service(self) -> TranslationService:
+        return self._translation_service
 
     def run(self):
         """启动 Gradio UI 应用程序。"""

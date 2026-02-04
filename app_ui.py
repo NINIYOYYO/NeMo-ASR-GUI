@@ -5,9 +5,7 @@ from interfaces import IApplication
 from utils.logger import logger
 from utils.translator import t, set_language, get_language
 
-
 initial_model_status = t("model.not_loaded")
-
 
 def create_ui(app: IApplication) -> gr.Blocks:
     """
@@ -30,6 +28,11 @@ def create_ui(app: IApplication) -> gr.Blocks:
     saved_cloud_model = initial_config.get("cloud_model_name")
     saved_language = initial_config.get("language", "zh")
     initial_chunk_length = initial_config.get("chunk_length_s")
+
+    saved_api_key = initial_config.get("api_key", "")
+    saved_base_url = initial_config.get("base_url", "https://api.openai.com/v1")
+    saved_llm_model = initial_config.get("llm_model", "gpt-5.2")
+    saved_proxy = initial_config.get("proxy", "")
 
     # 设置初始语言
     set_language(saved_language)
@@ -92,7 +95,64 @@ def create_ui(app: IApplication) -> gr.Blocks:
             status_output: gr.update(label=t("transcription.status_label")),
             subtitle_result_accordion: gr.update(label=t("transcription.result_title")),
             subtitle_file_output: gr.update(label=t("transcription.download_label")),
+            subtitle_zip_download_button: gr.update(value=t("transcription.zip_button")),
             subtitle_preview_output: gr.update(label=t("transcription.preview_label")),
+            speaker_diarization_tab: gr.update(label=t("diarization.tab_title")),
+            enable_speaker_diarization_checkbox: gr.update(
+                label=t("diarization.enable_label"), info=t("diarization.enable_info")
+            ),
+            diarization_dev_msg: gr.update(value=t("diarization.development_msg")),
+
+            # 字幕编辑区域
+            subtitle_editing_tab: gr.update(label=t("editing.tab_title")),
+            subtitle_to_edit_input: gr.update(label=t("editing.upload_label")),
+            correction_table: gr.update(
+                label=t("editing.correction_table_label"), 
+                headers=[t("editing.table_header_error"), t("editing.table_header_correct")]
+            ),
+            apply_correction_btn: gr.update(value=t("editing.batch_replace_btn")),
+            save_correction_btn: gr.update(value=t("editing.save_correction_btn")),
+            editing_tips_md: gr.update(value=t("editing.tips")),
+            subtitle_editor_df: gr.update(
+                label=t("editing.data_label"),
+                headers=[t("editing.col_id"), t("editing.col_start"), t("editing.col_end"), t("editing.col_text")]
+            ),
+            save_edit_button: gr.update(value=t("editing.save_subtitle_btn")),
+            edited_file_output: gr.update(label=t("editing.download_label")),
+
+            # 大模型翻译区域
+            translation_tab: gr.update(label=t("translation.tab_title")),
+            trans_subtitle_input: gr.update(label=t("translation.upload_label")),
+            trans_api_accordion: gr.update(label=t("llm.api_accordion")),
+            trans_api_key_input: gr.update(label=t("llm.api_key_label")),
+            trans_base_url_input: gr.update(label=t("llm.base_url_label")),
+            trans_model_name_input: gr.update(label=t("llm.model_name_label")),
+            trans_proxy_input: gr.update(label=t("llm.proxy_label"), placeholder=t("llm.proxy_placeholder")),
+            trans_concurrency_slider: gr.update(label=t("llm.concurrency_label"), info=t("llm.concurrency_info")),
+            trans_chunk_size_slider: gr.update(label=t("translation.chunk_size_label"), info=t("translation.chunk_size_info")),
+            trans_options_accordion: gr.update(label=t("translation.options_accordion")),
+            target_language_dropdown: gr.update(label=t("translation.target_lang_label")),
+            double_language_checkbox: gr.update(label=t("translation.bilingual_label")),
+            translation_button: gr.update(value=t("translation.start_button")),
+            trans_status_msg: gr.update(label=t("translation.status_label")),
+            translation_file_output: gr.update(label=t("translation.download_label")),
+            translation_preview: gr.update(label=t("translation.preview_label")),
+
+            # AI 断句区域
+            ai_segmentation_tab: gr.update(label=t("segmentation.tab_title")),
+            seg_description_md: gr.update(value=t("segmentation.description")),
+            seg_file_input: gr.update(label=t("segmentation.upload_label")),
+            seg_submit_btn: gr.update(value=t("segmentation.start_button")),
+            seg_api_accordion: gr.update(label=t("llm.api_accordion")),
+            seg_api_key_input: gr.update(label=t("llm.api_key_label")),
+            seg_base_url_input: gr.update(label=t("llm.base_url_label")),
+            seg_model_name_input: gr.update(label=t("llm.model_name_label")),
+            seg_proxy_input: gr.update(label=t("llm.proxy_label"), placeholder=t("llm.proxy_placeholder")),
+            seg_concurrency_slider: gr.update(label=t("llm.concurrency_label"), info=t("llm.concurrency_info")),
+            seg_chunk_size_slider: gr.update(label=t("segmentation.chunk_size_label"), info=t("segmentation.chunk_info")),
+            seg_status: gr.update(label=t("segmentation.status_label")),
+            seg_file_output: gr.update(label=t("segmentation.download_label")),
+
             # 提示区域
             tips_title_md: gr.update(value=t("ui.tips_title")),
             tips_content_md: gr.update(value=t("ui.tips_content")),
@@ -127,7 +187,7 @@ def create_ui(app: IApplication) -> gr.Blocks:
                         ("한국어", "ko"),
                     ],
                     value=saved_language,
-                    label="中文/English/日本語/한국어",
+                    label="Language / 语言",
                     interactive=True,
                 )
 
@@ -196,71 +256,292 @@ def create_ui(app: IApplication) -> gr.Blocks:
             )
 
         gr.Markdown("---")
-
+        # --- 字幕生成 Tab ---
         with gr.Tab(t("transcription.tab_title")) as transcription_tab:
             video_input = gr.File(
                 label=t("transcription.upload_label"),
                 file_count="multiple",
             )
-        # --- 输出配置区域---
-        with gr.Accordion(
-            t("output.accordion_title"), open=True
-        ) as output_config_accordion:
 
-            # --- Tab 1: 基础格式 ---
-            with gr.Tab(t("output.tab_format")) as tab_format:
-                format_checkboxes = gr.CheckboxGroup(
-                    choices=["srt", "vtt", "txt", "json", "lrc", "ass"],
-                    value=["srt"],
-                    label=t("transcription.format_label"),
-                    interactive=True,
-                )
+            # --- 输出配置区域---
+            with gr.Accordion(
+                t("output.accordion_title"), open=True
+            ) as output_config_accordion:
 
-            # --- Tab 2: 逐字/逐词格式 ---
-            with gr.Tab(t("output.tab_word_level")) as tab_word_level:
-                word_format_checkboxes = gr.CheckboxGroup(
-                    choices=[("word_srt", "word_srt"), ("char_srt", "char_srt")],
-                    label=t("output.word_level_label"),
-                    info=t("output.word_level_info"),
-                    interactive=True,
-                )
+                # --- Tab 1: 基础格式 ---
+                with gr.Tab(t("output.tab_format")) as tab_format:
+                    format_checkboxes = gr.CheckboxGroup(
+                        choices=["srt", "vtt", "txt", "json", "lrc", "ass"],
+                        value=["srt"],
+                        label=t("transcription.format_label"),
+                        interactive=True,
+                    )
 
-            # --- Tab 3: 长度限制 ---
-            with gr.Tab(t("output.tab_split")) as tab_split:
-                enable_split_checkbox = gr.Checkbox(
-                    label=t("output.enable_split_label"), value=False
-                )
+                # --- Tab 2: 逐字/逐词格式 ---
+                with gr.Tab(t("output.tab_word_level")) as tab_word_level:
+                    word_format_checkboxes = gr.CheckboxGroup(
+                        choices=[("word_srt", "word_srt"), ("char_srt", "char_srt")],
+                        label=t("output.word_level_label"),
+                        info=t("output.word_level_info"),
+                        interactive=True,
+                    )
 
-                max_line_width_slider = gr.Slider(
-                    minimum=10,
-                    maximum=100,
-                    value=40,
-                    step=1,
-                    label=t("output.max_width_label"),
-                    info=t("output.max_width_info"),
-                )
+                # --- Tab 3: 长度限制 ---
+                with gr.Tab(t("output.tab_split")) as tab_split:
+                    enable_split_checkbox = gr.Checkbox(
+                        label=t("output.enable_split_label"), value=False
+                    )
 
-        media_submit_button = gr.Button(
-            t("transcription.submit_button"), variant="primary", size="lg"
-        )
+                    max_line_width_slider = gr.Slider(
+                        minimum=10,
+                        maximum=100,
+                        value=40,
+                        step=1,
+                        label=t("output.max_width_label"),
+                        info=t("output.max_width_info"),
+                    )
 
-        status_output = gr.Textbox(
-            label=t("transcription.status_label"), lines=1, interactive=False
-        )
-        with gr.Accordion(
-            t("transcription.result_title"), open=True
-        ) as subtitle_result_accordion:
-            subtitle_file_output = gr.File(
-                label=t("transcription.download_label"),
-                interactive=False,
-                file_count="multiple",
+                with gr.Tab(t("diarization.tab_title")) as speaker_diarization_tab:
+                    enable_speaker_diarization_checkbox = gr.Checkbox(
+                        label=t("diarization.enable_label"),
+                        info=t("diarization.enable_info"),
+                        value=False,
+                    )
+                    diarization_dev_msg = gr.Markdown(t("diarization.development_msg"))
+
+            media_submit_button = gr.Button(
+                t("transcription.submit_button"), variant="primary", size="lg"
             )
-            subtitle_preview_output = gr.Textbox(
-                label=t("transcription.preview_label"),
-                lines=10,
-                max_lines=20,
-                interactive=False,
+
+            status_output = gr.Textbox(
+                label=t("transcription.status_label"), lines=1, interactive=False
             )
+            with gr.Accordion(
+                t("transcription.result_title"), open=True
+            ) as subtitle_result_accordion:
+                subtitle_file_output = gr.File(
+                    label=t("transcription.download_label"),
+                    interactive=False,
+                    file_count="multiple",
+                )
+
+                subtitle_zip_download_button = gr.Button(
+                    t("transcription.zip_button"), variant="secondary"
+                )
+
+                subtitle_zip_output = gr.File(
+                        label="ZIP Archive",
+                        interactive=False,
+                        file_count="single",
+                        scale=3,
+                        height=100
+                    )
+
+                subtitle_preview_output = gr.Textbox(
+                    label=t("transcription.preview_label"),
+                    lines=10,
+                    max_lines=20,
+                    interactive=False,
+                )
+
+                subtitle_zip_download_button.click(
+                    fn=app.transcription_controller.create_zip_archive,
+                    inputs=[subtitle_file_output], # 将生成的字幕文件列表作为输入
+                    outputs=[subtitle_zip_output], # 将生成的 ZIP 文件作为输出
+                )
+        # --- 字幕编辑 Tab ---
+        with gr.Tab(t("editing.tab_title")) as subtitle_editing_tab:
+            subtitle_to_edit_input = gr.File(
+                label=t("editing.upload_label"), file_count="multiple"
+            )
+
+            # 初始化时加载已保存的校对本
+            saved_corrections = app.subtitle_editor_controller.load_corrections()
+
+            correction_table = gr.Dataframe(
+                headers=[t("editing.table_header_error"), t("editing.table_header_correct")],
+                datatype=["str", "str"],
+                col_count=(2, "fixed"),
+                value=saved_corrections,  # 填充保存的数据
+                interactive=True,  # 开启交互模式
+                label=t("editing.correction_table_label"),
+                wrap=True,
+            )
+
+            with gr.Row():
+                apply_correction_btn = gr.Button(t("editing.batch_replace_btn"), variant="primary")
+                save_correction_btn = gr.Button(t("editing.save_correction_btn"), variant="secondary")
+
+            editing_tips_md = gr.Markdown(t("editing.tips"))
+
+            subtitle_editor_df = gr.Dataframe(
+                headers=[
+                    t("editing.col_id"), 
+                    t("editing.col_start"), 
+                    t("editing.col_end"), 
+                    t("editing.col_text")
+                ],
+                datatype=["number", "str", "str", "str"],
+                col_count=(4, "fixed"),
+                interactive=True,
+                wrap=True,
+                label=t("editing.data_label"),
+            )
+
+            save_edit_button = gr.Button(t("editing.save_subtitle_btn"), variant="primary")
+
+            edited_file_output = gr.File(
+                label=t("editing.download_label"), interactive=False
+            )
+            # --- 字幕编辑逻辑 ---
+
+            # 1. 加载文件
+            def on_file_upload(files):
+                if not files:
+                    return None
+                df_data, status = app.subtitle_editor_controller.load_subtitle_file(
+                    files
+                )
+                return df_data
+
+            subtitle_to_edit_input.change(
+                fn=on_file_upload,
+                inputs=[subtitle_to_edit_input],
+                outputs=[subtitle_editor_df],
+            )
+
+            apply_correction_btn.click(
+                fn=app.subtitle_editor_controller.apply_batch_corrections,
+                inputs=[subtitle_editor_df, correction_table],
+                outputs=[subtitle_editor_df],
+            )
+
+            # 3. 保存导出
+            save_edit_button.click(
+                fn=app.subtitle_editor_controller.save_subtitles,
+                inputs=[subtitle_editor_df, subtitle_to_edit_input],
+                outputs=[edited_file_output],
+            )
+
+            # 1. 点击按钮手动保存校对本
+            save_correction_btn.click(
+                fn=app.subtitle_editor_controller.save_corrections,
+                inputs=[correction_table],
+                outputs=[],
+            ).then(lambda: gr.Info(t("editing.save_success_info")))
+
+            # 2. 批量替换逻辑 (保持不变，Controller里已经修复了兼容性)
+            apply_correction_btn.click(
+                fn=app.subtitle_editor_controller.apply_batch_corrections,
+                inputs=[subtitle_editor_df, correction_table],
+                outputs=[subtitle_editor_df],
+            )
+
+        #AI 翻译 Tab
+        with gr.Tab(t("translation.tab_title")) as translation_tab:
+            trans_subtitle_input = gr.File(
+                label=t("translation.upload_label"), file_count="multiple"
+            )
+
+            with gr.Accordion(t("llm.api_accordion"), open=True) as trans_api_accordion:
+                with gr.Row():
+                    trans_api_key_input = gr.Textbox(label=t("llm.api_key_label"), type="password", placeholder="sk-...", value=saved_api_key)
+                    trans_base_url_input = gr.Textbox(label=t("llm.base_url_label"), value=saved_base_url)
+                with gr.Row():
+                    trans_model_name_input = gr.Textbox(label=t("llm.model_name_label"), value=saved_llm_model)
+                    trans_proxy_input = gr.Textbox(label=t("llm.proxy_label"), placeholder=t("llm.proxy_placeholder"), value=saved_proxy)
+                with gr.Row():
+                    trans_concurrency_slider = gr.Slider(
+                        minimum=1, maximum=50, value=5, step=1, 
+                        label=t("llm.concurrency_label"), info=t("llm.concurrency_info")
+                    )
+                    trans_chunk_size_slider = gr.Slider(
+                        minimum=5, maximum=200, value=30, step=5, 
+                        label=t("translation.chunk_size_label"), info=t("translation.chunk_size_info")
+                    )
+          
+            with gr.Accordion(t("translation.options_accordion"), open=True) as trans_options_accordion:
+                with gr.Row():
+                    target_language_dropdown = gr.Dropdown(
+                        choices=[
+                            ("中文", "Chinese"),
+                            ("English", "English"),
+                            ("日本語", "Japanese"),
+                            ("한국어", "Korean"),
+                        ],
+                        value="Chinese",
+                        label=t("translation.target_lang_label"),
+                    )
+                    double_language_checkbox = gr.Checkbox(label=t("translation.bilingual_label"), value=True)
+
+            translation_button = gr.Button(t("translation.start_button"), variant="primary", size="lg")
+
+            trans_status_msg = gr.Textbox(label=t("translation.status_label"), interactive=False)
+            translation_file_output = gr.File(
+                label=t("translation.download_label"), interactive=False, file_count="multiple"
+            )
+            translation_preview = gr.Textbox(
+                label=t("translation.preview_label"), lines=10, interactive=False
+            )
+
+            # 事件绑定
+            translation_button.click(
+                fn=app.translation_controller.handle_translation,
+                inputs=[
+                    trans_subtitle_input,
+                    target_language_dropdown,
+                    double_language_checkbox,
+                    trans_api_key_input,
+                    trans_base_url_input,
+                    trans_model_name_input,
+                    trans_proxy_input,
+                    trans_concurrency_slider,
+                    trans_chunk_size_slider
+                ],
+                outputs=[trans_status_msg, translation_file_output, translation_preview],
+            )
+
+        # -- AI 断句 Tab ---
+        with gr.Tab(t("segmentation.tab_title")) as ai_segmentation_tab:
+            seg_description_md = gr.Markdown(t("segmentation.description"))
+            
+            seg_file_input = gr.File(label=t("segmentation.upload_label"), file_count="multiple")
+            seg_submit_btn = gr.Button(t("segmentation.start_button"), variant="primary")
+
+            with gr.Accordion(t("llm.api_accordion"), open=True) as seg_api_accordion:
+                with gr.Row():
+                    seg_api_key_input = gr.Textbox(label=t("llm.api_key_label"), type="password", placeholder="sk-...", value=saved_api_key)
+                    seg_base_url_input = gr.Textbox(label=t("llm.base_url_label"), value=saved_base_url)
+                with gr.Row():
+                    seg_model_name_input = gr.Textbox(label=t("llm.model_name_label"), value=saved_llm_model)
+                    seg_proxy_input = gr.Textbox(label=t("llm.proxy_label"), placeholder=t("llm.proxy_placeholder"), value=saved_proxy)
+                with gr.Row():
+                    seg_concurrency_slider = gr.Slider(
+                        minimum=1, maximum=50, value=5, step=1, 
+                        label=t("llm.concurrency_label"), info=t("llm.concurrency_info")
+                    )
+                    seg_chunk_size_slider = gr.Slider(
+                        minimum=5, maximum=200, value=30, step=5, 
+                        label=t("segmentation.chunk_size_label"), info=t("segmentation.chunk_info")
+                    )
+            
+            seg_status = gr.Textbox(label=t("segmentation.status_label"), interactive=False)
+            seg_file_output = gr.File(label=t("segmentation.download_label"), file_count="multiple")
+
+            seg_submit_btn.click(
+                fn=app.translation_controller.handle_ai_segmentation,
+                inputs=[
+                    seg_file_input,
+                    seg_api_key_input,
+                    seg_base_url_input,
+                    seg_model_name_input,
+                    seg_proxy_input,
+                    seg_concurrency_slider,
+                    seg_chunk_size_slider
+                ],
+                outputs=[seg_status, seg_file_output]
+            )
+
 
         # --- 事件监听器 ---
         load_local_model_button.click(
@@ -327,6 +608,7 @@ def create_ui(app: IApplication) -> gr.Blocks:
             status_output,
             subtitle_result_accordion,
             subtitle_file_output,
+            subtitle_zip_download_button, # Added this
             subtitle_preview_output,
             tips_title_md,
             tips_content_md,
@@ -341,6 +623,19 @@ def create_ui(app: IApplication) -> gr.Blocks:
             tab_format,
             tab_word_level,
             tab_split,
+            # 新增组件
+            speaker_diarization_tab, enable_speaker_diarization_checkbox, diarization_dev_msg,
+            subtitle_editing_tab, subtitle_to_edit_input, correction_table, apply_correction_btn,
+            save_correction_btn, editing_tips_md, subtitle_editor_df, save_edit_button,
+            edited_file_output,
+            translation_tab, trans_subtitle_input, trans_api_accordion, trans_api_key_input,
+            trans_base_url_input, trans_model_name_input, trans_proxy_input, trans_concurrency_slider,
+            trans_chunk_size_slider, trans_options_accordion, target_language_dropdown,
+            double_language_checkbox, translation_button, trans_status_msg, translation_file_output,
+            translation_preview,
+            ai_segmentation_tab, seg_description_md, seg_file_input, seg_submit_btn,
+            seg_api_accordion, seg_api_key_input, seg_base_url_input, seg_model_name_input,
+            seg_proxy_input, seg_concurrency_slider, seg_chunk_size_slider, seg_status, seg_file_output
         ]
 
         language_dropdown.change(

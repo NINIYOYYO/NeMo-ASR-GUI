@@ -52,7 +52,8 @@
     "log_saved": " 文件位于: {path}",
     "log_audio_extracted": "音频提取成功到: {path}",
     "log_temp_cleanup_failed": "无法删除临时音频文件 {path}: {error}",
-    "format_label": "选择输出格式 (支持多选)"
+    "format_label": "选择输出格式 (支持多选)",
+    "zip_button": "打包所有字幕成zip"
   },
   "audio": {
     "error_ffmpeg_not_found": "错误：ffmpeg 未检测到或未正确安装。请安装 ffmpeg 并确保其在系统 PATH 中。",
@@ -107,5 +108,66 @@
     "max_width_label": "单行最大字符数 (Max Characters)",
     "max_width_info": "超过此长度将强制换行。仅对普通字幕生效，不影响 Char/Word 级输出。",
     "tab_segmentation": "断句规则"
-}
+    
+  },
+  "diarization": {
+    "tab_title": "说话人分离",
+    "enable_label": "启用说话人分离",
+    "enable_info": "启用后，系统将尝试识别音频中的不同说话人。",
+    "development_msg": "说话人分离功能正在开发中，敬请期待！"
+  },
+  "editing": {
+    "tab_title": "字幕编辑",
+    "upload_label": "上传字幕文件进行编辑",
+    "correction_table_label": "校对本",
+    "table_header_error": "错误词",
+    "table_header_correct": "正确词",
+    "batch_replace_btn": "🚀 执行批量替换",
+    "save_correction_btn": "💾 保存校对本",
+    "tips": "💡 *提示：点击表格下方 '+' 号可增行，选中内容按 Delete 键可删除。修改后会自动保存。*",
+    "data_label": "字幕数据",
+    "col_id": "序号",
+    "col_start": "开始时间",
+    "col_end": "结束时间",
+    "col_text": "文本",
+    "save_subtitle_btn": "保存字幕",
+    "download_label": "下载编辑后的字幕",
+    "save_success_info": "校对本已成功保存到本地！",
+    "development_msg": "字幕编辑功能正在开发中，敬请期待！"
+  },
+  "llm": {
+    "api_accordion": "API 设置 (OpenAI 兼容)",
+    "api_key_label": "API Key",
+    "base_url_label": "Base URL",
+    "model_name_label": "Model Name",
+    "proxy_label": "网络代理",
+    "proxy_placeholder": "例如: http://127.0.0.1:7890",
+    "concurrency_label": "并发任务数",
+    "concurrency_info": "同时处理的任务组数，越高速度越快"
+  },
+  "translation": {
+    "tab_title": "大模型翻译",
+    "upload_label": "上传字幕文件进行翻译",
+    "chunk_size_label": "每组翻译行数",
+    "chunk_size_info": "越大越省钱且语境好，但容易出错位，以及翻译速度降低。建议 30-50",
+    "options_accordion": "翻译选项",
+    "target_lang_label": "目标语言",
+    "bilingual_label": "双语展示",
+    "start_button": "开始翻译",
+    "status_label": "状态",
+    "download_label": "下载翻译后的字幕",
+    "preview_label": "翻译预览",
+    "development_msg": "大模型翻译功能正在开发中，敬请期待！"
+  },
+  "segmentation": {
+    "tab_title": "AI 断句",
+    "description": "💡 **功能说明**：将原本零碎的‘逐词/逐字’字幕（如 Char-level SRT）发送给大模型，重新智能组合成易于阅读的长句。",
+    "upload_label": "上传待处理字幕",
+    "start_button": "开始 AI 智能断句",
+    "chunk_size_label": "每组行数",
+    "chunk_info": "越大越省钱且语境好，但容易出错位。建议 30-50。如果是 char 或 word srt 字幕，建议设置大一些。",
+    "status_label": "状态",
+    "download_label": "下载处理后的字幕"
+  }
+
 }

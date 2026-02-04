@@ -1,5 +1,6 @@
 
 from interfaces import ISubtitleGenerator
+import re
 
 
 class SubtitleService(ISubtitleGenerator):
@@ -226,3 +227,28 @@ class SubtitleService(ISubtitleGenerator):
     
     def _render_srt_block(self, index, start, end, text) -> str:
         return f"{index}\n{self._format_time(start)} --> {self._format_time(end)}\n{text}\n\n"
+    
+
+
+
+    def parse_srt(self, content: str) -> list:
+        """将 SRT 字符串解析为 segments 列表"""
+        segments = []
+        # 正则匹配 SRT 块
+        pattern = re.compile(r'(\d+)\n(\d{2}:\d{2}:\d{2},\d{3}) --> (\d{2}:\d{2}:\d{2},\d{3})\n(.*?)(?=\n\n|\Z)', re.DOTALL)
+        
+        for match in pattern.finditer(content):
+            index, start_str, end_str, text = match.groups()
+            segments.append({
+                "index": int(index),
+                "start": self._srt_time_to_seconds(start_str),
+                "end": self._srt_time_to_seconds(end_str),
+                "segment": text.strip()
+            })
+        return segments
+
+    def _srt_time_to_seconds(self, time_str: str) -> float:
+        """SRT 时间格式 (00:00:00,000) 转秒"""
+        hours, mins, secs_ms = time_str.split(':')
+        secs, ms = secs_ms.split(',')
+        return int(hours) * 3600 + int(mins) * 60 + int(secs) + int(ms) / 1000.0

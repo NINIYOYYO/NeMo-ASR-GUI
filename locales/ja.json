@@ -52,7 +52,8 @@
       "log_saved": "ファイルは次の場所にあります: {path}",
       "log_audio_extracted": "音声の抽出に成功しました: {path}",
       "log_temp_cleanup_failed": "一時音声ファイル {path} を削除できませんでした: {error}",
-      "format_label": "出力フォーマットを選択 (複数選択可)"
+      "format_label": "出力フォーマットを選択 (複数選択可)",
+      "zip_button": "すべてZIPでダウンロード"
     },
     "audio": {
       "error_ffmpeg_not_found": "エラー：ffmpegが検出されないか、正しくインストールされていません。ffmpegをインストールし、システムのPATHに含まれていることを確認してください。",
@@ -107,5 +108,64 @@
       "max_width_label": "1行の最大文字数 (Max Characters)",
       "max_width_info": "この長さを超えると強制的に改行されます。通常字幕にのみ適用され、Char/Wordレベル出力には影響しません。",
       "tab_segmentation": "文節区切りルール"
+  },
+  "diarization": {
+    "tab_title": "話者分離",
+    "enable_label": "話者分離を有効にする",
+    "enable_info": "有効にすると、システムは音声内の異なる話者を識別しようとします。",
+    "development_msg": "話者分離機能は現在開発中です。ご期待ください！"
+  },
+  "editing": {
+    "tab_title": "字幕編集",
+    "upload_label": "編集用字幕ファイルのアップロード",
+    "correction_table_label": "修正辞書",
+    "table_header_error": "誤",
+    "table_header_correct": "正",
+    "batch_replace_btn": "🚀 一括置換を実行",
+    "save_correction_btn": "💾 修正辞書を保存",
+    "tips": "💡 *ヒント：表の下の「+」をクリックして行を追加、Deleteキーで削除できます。変更は自動的に保存されます。*",
+    "data_label": "字幕データ",
+    "col_id": "ID",
+    "col_start": "開始時間",
+    "col_end": "終了時間",
+    "col_text": "テキスト",
+    "save_subtitle_btn": "字幕を保存",
+    "download_label": "編集後の字幕をダウンロード",
+    "save_success_info": "修正辞書がローカルに保存されました！",
+    "development_msg": "字幕編集機能は現在開発中です。ご期待ください！"
+  },
+  "llm": {
+    "api_accordion": "API設定 (OpenAI互換)",
+    "api_key_label": "API Key",
+    "base_url_label": "Base URL",
+    "model_name_label": "モデル名",
+    "proxy_label": "ネットワークプロキシ",
+    "proxy_placeholder": "例: http://127.0.0.1:7890",
+    "concurrency_label": "並列タスク数",
+    "concurrency_info": "同時に翻訳するグループの数。高いほど高速です。"
+  },
+  "translation": {
+    "tab_title": "LLM翻訳",
+    "upload_label": "翻訳用字幕ファイルのアップロード",
+    "chunk_size_label": "1グループあたりの行数",
+    "chunk_size_info": "大きいほど安価で文脈が良いですが、ずれが生じたり速度が低下する可能性があります。推奨：30〜50",
+    "options_accordion": "翻訳オプション",
+    "target_lang_label": "ターゲット言語",
+    "bilingual_label": "バイリンガル表示",
+    "start_button": "翻訳開始",
+    "status_label": "ステータス",
+    "download_label": "翻訳された字幕をダウンロード",
+    "preview_label": "翻訳プレビュー",
+    "development_msg": "LLM翻訳機能は現在開発中です。ご期待ください！"
+  },
+  "segmentation": {
+    "tab_title": "AI セグメンテーション",
+    "description": "💡 **機能説明**：バラバラになった「単語/文字単位」の字幕（Char-level SRTなど）をLLMに送信し、読みやすい長文に再構成します。",
+    "upload_label": "処理待ち字幕のアップロード",
+    "start_button": "AI スマート断句を開始",
+    "chunk_size_label": "1グループあたりの行数",
+    "chunk_info": "大きいほど安価で文脈が良いですが、ずれが生じる可能性があります。推奨30〜50。char/word srtの場合は大きめに設定してください。",
+    "status_label": "ステータス",
+    "download_label": "処理後の字幕をダウンロード"
   }
   }

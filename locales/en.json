@@ -52,7 +52,8 @@
     "log_saved": " file saved at: {path}",
     "log_audio_extracted": "Audio extracted successfully to: {path}",
     "log_temp_cleanup_failed": "Unable to delete temporary audio file {path}: {error}",
-    "format_label": "Select Output Formats (Multiple Choice)"
+    "format_label": "Select Output Formats (Multiple Choice)",
+    "zip_button": "Download all as ZIP"
   },
   "audio": {
     "error_ffmpeg_not_found": "Error: ffmpeg not detected or not properly installed. Please install ffmpeg and ensure it's in the system PATH.",
@@ -107,5 +108,65 @@
     "max_width_label": "Max Characters per Line",
     "max_width_info": "Forces a line break if exceeded. Applies to standard subtitles only; affects neither Char nor Word level output.",
     "tab_segmentation": "Segmentation Rules"
+},
+"diarization": {
+  "tab_title": "Speaker Diarization",
+  "enable_label": "Enable Speaker Diarization",
+  "enable_info": "If enabled, the system will attempt to identify different speakers in the audio.",
+  "development_msg": "Speaker Diarization is currently under development. Stay tuned!"
+},
+"editing": {
+  "tab_title": "Subtitle Editing",
+  "upload_label": "Upload Subtitle File for Editing",
+  "correction_table_label": "Correction Dictionary",
+  "table_header_error": "Wrong Word",
+  "table_header_correct": "Correct Word",
+  "batch_replace_btn": "🚀 Batch Replace",
+  "save_correction_btn": "💾 Save Corrections",
+  "tips": "💡 *Tip: Click '+' below the table to add rows. Select content and press Delete to remove. Changes save automatically.*",
+  "data_label": "Subtitle Data",
+  "col_id": "ID",
+  "col_start": "Start Time",
+  "col_end": "End Time",
+  "col_text": "Text",
+  "save_subtitle_btn": "Save Subtitles",
+  "download_label": "Download Edited Subtitles",
+  "save_success_info": "Correction dictionary saved to local successfully!",
+  "development_msg": "Subtitle Editing is currently under development. Stay tuned!"
+},
+"llm": {
+  "api_accordion": "API Settings (OpenAI Compatible)",
+  "api_key_label": "API Key",
+  "base_url_label": "Base URL",
+  "model_name_label": "Model Name",
+  "proxy_label": "Network Proxy",
+  "proxy_placeholder": "e.g., http://127.0.0.1:7890",
+  "concurrency_label": "Concurrency",
+  "concurrency_info": "Number of parallel tasks. Higher is faster."
+},
+"translation": {
+  "tab_title": "LLM Translation",
+  "upload_label": "Upload Subtitle File for Translation",
+  "chunk_size_label": "Lines per Chunk",
+  "chunk_size_info": "Larger is cheaper & better context, but may cause misalignment or slower speed. Suggested: 30-50",
+  "options_accordion": "Translation Options",
+  "target_lang_label": "Target Language",
+  "bilingual_label": "Bilingual Output",
+  "start_button": "Start Translation",
+  "status_label": "Status",
+  "download_label": "Download Translated Subtitles",
+  "preview_label": "Translation Preview",
+  "development_msg": "LLM Translation is currently under development. Stay tuned!"
+},
+"segmentation": {
+  "tab_title": "AI Segmentation",
+  "description": "💡 **Function**: Re-groups fragmented 'word-level' subtitles (e.g., Char-level SRT) into readable long sentences using LLMs.",
+  "upload_label": "Upload Subtitles to Process",
+  "start_button": "Start AI Segmentation",
+  "chunk_size_label": "Lines per Chunk",
+  "chunk_info": "Larger is cheaper & better context, but might cause misalignment. Suggested 30-50. For char/word srt, set higher.",
+  "status_label": "Status",
+  "download_label": "Download Processed Subtitles"
 }
+
 }

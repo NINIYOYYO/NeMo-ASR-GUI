@@ -1,43 +1,61 @@
-# Parakeet-TDT GUI - 智能视频/音频字幕生成工具
+# Parakeet-TDT-GUI: 智能语音转录与字幕工作站
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Model-NVIDIA%20Parakeet-green" alt="Model">
+  <img src="https://img.shields.io/badge/Framework-NeMo%20%2F%20Gradio-orange" alt="Framework">
+  <img src="https://img.shields.io/badge/License-MIT-blue" alt="License">
+</p>
 
 <p align="center">
   <a href="./README_en.md">English</a>
   <a href="./README_ko.md">한국어</a> 
   <a href="./README_ja.md">日本語</a>
-
 </p>
 
-本项目是一个基于 **NVIDIA NeMo** 框架的现代化 GUI 工具，封装了强大的 **Parakeet-TDT** 系列 ASR (自动语音识别) 模型。它能够自动识别视频或音频文件中的语音，并生成带精确时间戳的 **SRT 字幕文件**。
+**Parakeet-TDT-GUI** 是一个功能强大的本地化视听处理工作站。它基于 **NVIDIA NeMo** 框架和 **Parakeet-TDT** 系列模型，不仅能提供极速、高精度的语音识别（ASR），还集成了 **LLM（大语言模型）翻译**、**智能断句** 以及 **可视化的字幕校对编辑器**。
 
-本项目采用模块化设计，支持**多语言界面**、**批量文件处理**以及**多种模型切换**，旨在为用户提供最便捷的本地化字幕生成体验。
+本项目旨在为字幕组、视频创作者和语言学习者提供一站式的“转录-校对-翻译-导出”解决方案。
 
-## ✨ 核心功能
+## ✨ 核心特性 ()
 
-*   **多语言界面**: 内置国际化支持，支持一键切换 **中文 / English / 日本語 / 한국어** 界面。
-*   **多格式输出**: 支持生成多种字幕/文本格式：
-    *   `SRT`: 标准电影字幕格式。
-    *   `VTT`: 网页视频标准格式。
-    *   `ASS`: 支持高级样式和定位的字幕格式（已优化高清分辨率适配）。
-    *   `LRC`: 歌词同步格式。
-    *   `TXT / JSON`: 方便后续数据处理和存档。
-*   **全能媒体处理**: 不再区分视频或音频入口，支持直接上传 **MP4, MKV, AVI, MP3, WAV, FLAC** 等几乎所有常见格式。
-*   **批量转录**: 支持一次性上传多个文件，排队自动处理，高效便捷。
-*   **多模型支持**:
-    *   `nvidia/parakeet-tdt-0.6b-v2`: 综合能力强，支持英语。
-    *   `nvidia/parakeet-tdt_ctc-110m`: 轻量级模型，推理速度极快。
-    *   `nvidia/parakeet-tdt-0.6b-v3`: 更强的多语言支持（支持欧语系等20+种语言）。
-    *   ` "nvidia/parakeet-tdt_ctc-0.6b-ja`: "日语模型，支持日语转录"
-*   **灵活部署**: 
-    *   **云端加载**: 一键从 NVIDIA NGC 下载并加载最新模型。
-    *   **本地加载**: 支持加载本地已有的 `.nemo` 模型文件，无需重复下载。
-*   **智能硬件加速**: 自动检测 NVIDIA GPU (CUDA)，优先使用 GPU 加速；若无 GPU 则自动回退至 CPU 运行。
-*   **配置记忆**: 自动保存您上次使用的模型、分块设置和语言偏好。
+### 1. 极致转录 (ASR)
+*   **多模型支持**: 集成 NVIDIA 最新的 Parakeet TDT 系列模型：
+    *   `0.6b-v2`: 英语识别综合能力最强。
+    *   `0.6b-v3`: 支持 **20+ 种语言**（英/德/法/俄/日/西等）。
+    *   `ctc-110m`: 超轻量级，低显存极速推理。
+    *   `0.6b-ja`: 针对 **日语** 优化的专用模型。
+*   **多格式导出**: 支持导出 `SRT`, `VTT`, `ASS` (特效字幕), `LRC` (歌词), `TXT`, `JSON`。
+*   **微秒级精度**: 支持 **逐词 (Word-level)** 和 **逐字 (Character-level)** 时间戳输出，适合制作卡拉OK或精确对齐。
+*   **智能排版**: 内置智能拆分逻辑，可限制单行最大字符数，防止字幕超长。
 
-## 🛠 环境要求
+### 2. LLM 智能翻译
+*   **多模型兼容**: 兼容 OpenAI 格式接口（支持 **DeepSeek**、**ChatGPT**、**Claude** 等）及 Google Gemini 原生接口。
+*   **双语字幕**: 支持生成“原文+译文”的双语对照字幕。
+*   **防错位算法**: 采用 ID-Mapping 映射技术，彻底解决大模型翻译时行数不匹配和时间轴错位的问题。
+*   **高并发**: 支持多线程并发翻译，大幅提升长视频处理速度。
 
-*   **Python**: 3.10 或更高版本 (推荐 3.12)。
-*   **FFmpeg**: **必须单独安装**并配置到系统环境变量中（用于媒体格式转换和音频提取）。
-*   **NVIDIA GPU**: (强烈推荐) 拥有 4GB 以上显存的 NVIDIA 显卡，并安装好 CUDA 驱动。
+### 3. 可视化字幕编辑器
+*   **校对表格**: 类似 Excel 的界面，直接在网页上修改时间轴和文本。
+*   **批量修正**: 支持定义“错误-正确”对照表（如将“Parakeet”统一修正为“鹦鹉”），一键批量替换全文。
+*   **校对本记忆**: 自动保存你的校对规则，越用越顺手。
+
+### 4. AI 智能断句
+*   针对 ASR 生成的大段不换行文本，利用 LLM 的语义理解能力进行智能切分，自动匹配原始时间轴，生成符合人类阅读习惯的短句字幕。
+
+
+---
+
+## 环境要求
+
+*   **操作系统**: Windows / Linux
+*   **Python**: 3.10 - 3.12
+*   **显卡**: 推荐拥有 **4GB+ 显存** 的 NVIDIA 显卡（支持 CUDA）。
+    *   *注：无显卡也可使用 CPU 模式，但速度较慢。*
+*   **FFmpeg**: **必须安装** 并配置到系统环境变量（用于音频提取）。
+### 安装前提： 如果是在windows下依赖安装失败请确保电脑有**Visual Studio**能够编译
+
+
+---
 
 ## 🚀 安装指南 (Windows)
 
@@ -98,78 +116,95 @@
     ```bash
     python main.py
     ```
-
+---    
 ## 📖 使用教程
 
-程序启动后，浏览器会自动打开 `http://127.0.0.1:7860`。
+### 1. 模型加载 (Model Loading)
+进入 **"模型设置"** 区域：
+*   **云端模型**: 选择模型（如 `nvidia/parakeet-tdt-0.6b-v2`），点击加载。首次会自动下载（约1-2GB）。
+*   **本地模型**: 输入 `.nemo` 文件的绝对路径，点击加载。
 
-### 1. 初始设置与语言
-*   界面顶部提供了语言切换菜单，选择你熟悉的语言（如“中文”）。
-*   程序会自动记住你的选择。
+### 2. 字幕生成 (Transcription)
+1.  上传视频/音频文件（支持批量）。
+2.  **分块长度**: 建议 60-180秒。
+3.  **输出格式**: 勾选需要的格式（推荐 `srt` 和 `ass`）。
+4.  **高级选项**:
+    *   *逐字/逐词*: 需要卡拉OK效果时勾选。
+    *   *智能拆分*: 开启并设置“最大行宽”（如 40字符），自动将长句切分为双行。
+5.  点击 **"开始生成"**。
 
-### 2. 加载 ASR 模型
-在使用转录功能前，必须先加载模型。
+### 3. 字幕编辑 (Editing)
+1.  在 **"字幕编辑"** 标签页上传刚才生成的 SRT 文件。
+2.  **批量校对**: 在左侧“校对表”中输入常错词和正确词，点击“批量替换”。
+3.  **手动微调**: 在下方表格中直接修改文字或时间。
+4.  点击 **"保存字幕文件"** 导出修改后的版本。
 
-*   **云端模型 (推荐首次使用)**:
-    1.  在“云端模型名称”下拉框中选择模型（例如 `nvidia/parakeet-tdt-0.6b-v2`）。
-    2.  点击 **“加载云端模型”** 按钮。
-    3.  *注意：首次加载需要下载约 1-2GB 的模型文件，请耐心等待。*
+### 4. AI 翻译 (Translation)
+1.  切换到 **"AI 翻译"** 标签页。
+2.  填写 LLM 配置：
+    *   **API Key**: 你的 OpenAI/DeepSeek/Gemini 密钥。
+    *   **Base URL**: 例如 `https://api.deepseek.com` 或 `https://generativelanguage.googleapis.com/v1beta`。
+    *   **Model**: 例如 `deepseek-chat` 或 `gemini-3.0-flash`。
+3.  设置 **目标语言** 和 **是否双语**。
+4.  点击开始，系统将自动并行翻译并生成新文件。
 
-*   **本地模型**:
-    1.  如果你已有 `.nemo` 文件，在“本地模型路径”输入框中填入文件的绝对路径。
-    *例如 C:\Users\models--nvidia--parakeet-tdt-0.6b-v2\snapshots\30c5e6f557f6ba26e5819a9ed2e86f670186b43f\parakeet-tdt-0.6b-v2.nemo*
-    2.  点击 **“加载本地模型”** 按钮。
+### 5. AI 断句 (Segmentation)
+*   适用于 ASR 生成的字幕虽然文字对但在时间轴上“一句话太长”的情况。
+*   上传字幕，配置 LLM，点击开始，AI 会根据语义重新切分时间轴。
 
-### 3. 生成字幕
-1.  切换到 **“字幕生成 (Transcription)”** 标签页。
-2.  点击文件上传区域，选择一个或多个 **视频** 或 **音频** 文件。
-3.  (可选) 调整 **音频分块长度** 滑块。
-    *   *建议值：60-180秒。分块越长，上下文越连贯，但对显存要求越高。*
-4.  点击 **“开始生成 / Submit”** 按钮。
-5.  右侧/下方会实时显示当前处理的文件名和进度。
-6.  处理完成后，你可以：
-    *   点击链接下载生成的 `.srt` 文件。
-    *   在下方文本框直接预览字幕内容。
+---
+## 界面展示
+!["界面"](./README.assets/2.png)
 
-## 📂 项目结构说明
+
+## 📂 项目结构
 
 ```text
-.
-├── main.py                  # 程序入口
-├── application.py           # 应用核心组装与服务协调
-├── app_ui.py                # Gradio 界面构建逻辑
-├── config.json              # 用户配置文件 (自动生成)
-├── controllers/             # [MVC] 控制器层：处理业务逻辑
-│   ├── model_controller.py
-│   └── transcription_controller.py
-├── core/                    # 核心功能层
-│   ├── asr_service.py       # NeMo 模型加载与推理
-│   ├── audio_processor.py   # FFmpeg 音频提取与处理
-│   └── srt_generator.py     # SRT 格式生成
-├── interfaces/              # 抽象接口定义
-├── utils/                   # 工具库
-│   ├── config_manager.py    # 配置读写
-│   ├── logger.py            # 日志系统
-│   └── translator.py        # 国际化翻译管理
-└── locales/                 # 多语言翻译文件 (zh.json, en.json...)
+D:\PROGRAMING\PARAKEET-TDT-0.6B-V2-SRT-GUI
+│  application.py           # 应用核心编排
+│  app_ui.py                # Gradio UI 布局与交互
+│  main.py                  # 启动入口
+│  config.json              # 用户配置文件
+│  
+├─controllers/              # 业务逻辑控制器
+│      model_controller.py
+│      subtitle_editor_controller.py
+│      transcription_controller.py
+│      translation_controller.py
+│      
+├─core/                     # 核心服务
+│      asr_service.py       # NeMo 模型推理封装
+│      audio_processor.py   # FFmpeg 音频处理
+│      post_processors.py   # 后处理策略 (日语优化/断句)
+│      subtitle_generator.py# 字幕格式生成 (SRT/ASS/VTT等)
+│      translation_service.py # LLM 翻译与断句服务
+│      
+├─interfaces/               # 接口定义
+├─locales/                  # 多语言界面翻译
+├─subtitles/                # 输出目录
+│  ├─edited/                # 编辑后的字幕
+│  └─translated/            # 翻译后的字幕
+│      
+└─utils/                    # 工具类 (日志、配置、异常)
 ```
-## 界面展示
-![界面展示](./README.assets/1.png)
 
 ## ⚠️ 常见问题 (FAQ)
 
-**Q: 点击“加载模型”后界面卡住不动了？**
-A: 首次加载云端模型时正在后台下载大文件。请查看终端（命令行）窗口，那里会有详细的下载进度条。
+**Q: 为什么生成的字幕全是乱码或者时间轴重叠？**
+A: 请检查是否使用了不匹配语言的模型。例如，用英语模型转录中文音频会导致不可预测的结果。请使用 `0.6b-v3` (多语言) 或专用模型。
 
-**Q: 报错 `FileNotFoundError: [WinError 2] 系统找不到指定的文件`？**
-A: 这通常是因为没有安装 **FFmpeg** 或者安装后没有将其加入到系统环境变量 PATH 中。
+**Q: 翻译功能报错 "429 Too Many Requests"？**
+A: 这是 API 调用频率限制。请在界面上调低 **"并发数 (Concurrency)"** 滑块，或者增加 **"分块大小"**。
 
-**Q: 程序提示在 CPU 上运行，但我有显卡？**
-A: 请检查你的 PyTorch 是否安装了 CUDA 版本。在终端输入 `python` 进入交互模式，输入 `import torch; print(torch.cuda.is_available())`，如果输出 `False`，请重新安装 GPU 版 PyTorch。
+**Q: 程序提示找不到 FFmpeg？**
+A: 请确保在 CMD 中输入 `ffmpeg` 能看到版本信息。如果刚安装，请重启电脑或 IDE。
 
-**Q: 显存不足 (OOM) 怎么办？**
-A: 1. 尝试减小“音频分块长度”。 2. 尝试选择参数量更小的模型（如 `ctc-110m`）。
+**Q: 显存爆了 (OOM) 怎么办？**
+A: 1. 减小“音频分块长度” (例如设为 30s)。2. 使用更小的模型 (`ctc-110m`)。
 
-## 🤝 贡献
+---
 
-欢迎提交 Issue 或 Pull Request 来改进本项目！
+## 🤝 贡献与协议
+
+本项目基于 MIT 协议开源。核心模型版权归 NVIDIA 所有。
+欢迎提交 Issue 反馈 Bug 或提交 Pull Request 增加新功能！

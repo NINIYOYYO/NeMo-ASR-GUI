@@ -52,7 +52,8 @@
       "log_saved": " 파일 위치: {path}",
       "log_audio_extracted": "오디오가 성공적으로 추출되었습니다: {path}",
       "log_temp_cleanup_failed": "임시 오디오 파일 {path}을(를) 삭제할 수 없습니다: {error}",
-      "format_label": "출력 포맷 선택 (다중 선택 가능)"
+      "format_label": "출력 포맷 선택 (다중 선택 가능)",
+      "zip_button": "모두 ZIP으로 다운로드"
     },
     "audio": {
       "error_ffmpeg_not_found": "오류: ffmpeg이 감지되지 않았거나 올바르게 설치되지 않았습니다. ffmpeg을 설치하고 시스템 PATH에 있는지 확인하세요.",
@@ -107,5 +108,64 @@
       "max_width_label": "한 줄 최대 문자 수 (Max Characters)",
       "max_width_info": "이 길이를 초과하면 강제로 줄바꿈합니다. 일반 자막에만 적용되며, Char/Word 단위 출력에는 영향을 주지 않습니다.",
       "tab_segmentation": "문장 분리 규칙"
+  },
+  "diarization": {
+    "tab_title": "화자 분리",
+    "enable_label": "화자 분리 활성화",
+    "enable_info": "활성화하면 시스템이 오디오 내의 서로 다른 화자를 식별하려고 시도합니다.",
+    "development_msg": "화자 분리 기능은 현재 개발 중입니다. 기대해 주세요!"
+  },
+  "editing": {
+    "tab_title": "자막 편집",
+    "upload_label": "편집할 자막 파일 업로드",
+    "correction_table_label": "교정 사전",
+    "table_header_error": "오류 단어",
+    "table_header_correct": "올바른 단어",
+    "batch_replace_btn": "🚀 일괄 바꾸기 실행",
+    "save_correction_btn": "💾 교정 사전 저장",
+    "tips": "💡 *팁: 표 아래의 '+'를 클릭하여 행을 추가하고, 내용을 선택한 후 Delete 키를 눌러 삭제할 수 있습니다. 변경 사항은 자동으로 저장됩니다.*",
+    "data_label": "자막 데이터",
+    "col_id": "번호",
+    "col_start": "시작 시간",
+    "col_end": "종료 시간",
+    "col_text": "텍스트",
+    "save_subtitle_btn": "자막 저장",
+    "download_label": "편집된 자막 다운로드",
+    "save_success_info": "교정 사전이 로컬에 성공적으로 저장되었습니다!",
+    "development_msg": "자막 편집 기능은 현재 개발 중입니다. 기대해 주세요!"
+  },
+  "llm": {
+    "api_accordion": "API 설정 (OpenAI 호환)",
+    "api_key_label": "API Key",
+    "base_url_label": "Base URL",
+    "model_name_label": "모델 이름",
+    "proxy_label": "네트워크 프록시",
+    "proxy_placeholder": "예: http://127.0.0.1:7890",
+    "concurrency_label": "동시 작업 수",
+    "concurrency_info": "동시에 번역할 그룹 수입니다. 높을수록 속도가 빠릅니다."
+  },
+  "translation": {
+    "tab_title": "LLM 번역",
+    "upload_label": "번역할 자막 파일 업로드",
+    "chunk_size_label": "그룹당 행 수",
+    "chunk_size_info": "클수록 비용이 절약되고 문맥이 좋지만, 위치가 어긋나거나 속도가 느려질 수 있습니다. 권장: 30-50",
+    "options_accordion": "번역 옵션",
+    "target_lang_label": "목표 언어",
+    "bilingual_label": "이중 언어 표시",
+    "start_button": "번역 시작",
+    "status_label": "상태",
+    "download_label": "번역된 자막 다운로드",
+    "preview_label": "번역 미리보기",
+    "development_msg": "LLM 번역 기능은 현재 개발 중입니다. 기대해 주세요!"
+  },
+  "segmentation": {
+    "tab_title": "AI 문장 분할",
+    "description": "💡 **기능 설명**: 파편화된 '단어/글자 단위' 자막(예: Char-level SRT)을 LLM으로 전송하여 읽기 쉬운 긴 문장으로 지능적으로 재구성합니다.",
+    "upload_label": "처리할 자막 업로드",
+    "start_button": "AI 스마트 문장 분할 시작",
+    "chunk_size_label": "그룹당 행 수",
+    "chunk_info": "클수록 비용이 절약되고 문맥이 좋지만, 위치가 어긋날 수 있습니다. 권장 30-50. char/word srt인 경우 더 크게 설정하세요.",
+    "status_label": "상태",
+    "download_label": "처리된 자막 다운로드"
   }
   }

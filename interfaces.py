@@ -1,17 +1,16 @@
 from abc import ABC, abstractmethod
 
 
-
 class IASRService(ABC):
     """
     封装所有与 NeMo ASR 模型相关的操作。
     """
+
     @property
     @abstractmethod
     def is_model_loaded(self) -> bool:
         """检查 ASR 模型是否已加载。"""
         ...
-
 
     @abstractmethod
     def load_model_from_ngc(self, model_name: str) -> str:
@@ -24,7 +23,9 @@ class IASRService(ABC):
         ...
 
     @abstractmethod
-    def transcribe_audio_in_chunks(self, audio_path: str, chunk_length_ms: int, max_chars: int = 0) -> list:
+    def transcribe_audio_in_chunks(
+        self, audio_path: str, chunk_length_ms: int, max_chars: int = 0
+    ) -> list:
         """
         将音频文件分块转录并返回带有全局时间戳的段列表。
         ARGS:
@@ -36,9 +37,6 @@ class IASRService(ABC):
 
         """
         ...
-    
-
-    
 
 
 class IConfigManager(ABC):
@@ -70,14 +68,14 @@ class IConfigManager(ABC):
     def get_config_value(self, key: str):
         """获取配置中的特定值。"""
         ...
-    
-    
-    
+
+
 class ISubtitleGenerator(ABC):
     """
     字幕生成服务接口。
     支持多种格式转换逻辑
     """
+
     @abstractmethod
     def generate_content(self, segment_timestamps: list, format_type: str) -> str:
         """
@@ -87,6 +85,17 @@ class ISubtitleGenerator(ABC):
             format_type: 格式类型 (e.g., 'srt', 'vtt', 'txt', 'json')
         RETURNS:
             SRT 格式的字符串。
+        """
+        ...
+
+    @abstractmethod
+    def parse_srt(self, srt_content: str) -> list:
+        """
+        解析 SRT 字幕内容为时间戳列表。
+        ARGS:
+            srt_content: SRT 格式的字幕内容字符串。
+        RETURNS:
+            包含 {'start': float, 'end': float, 'segment': str} 的列表。
         """
         ...
 
@@ -103,15 +112,18 @@ class IAudioService(ABC):
         返回提取的音频文件路径，或在失败时返回 None。
         """
         ...
-    
+
 
 class IModelController(ABC):
     """
     一个专门处理模型相关 UI 事件的控制器
 
     """
+
     @abstractmethod
-    def handle_load_local_click(self, path_from_input_box, chunk_val_from_slider, selected_cloud_model):
+    def handle_load_local_click(
+        self, path_from_input_box, chunk_val_from_slider, selected_cloud_model
+    ):
         """处理“加载本地模型”按钮点击事件。"""
         ...
 
@@ -120,12 +132,16 @@ class IModelController(ABC):
         """处理“加载云端模型”按钮点击事件。"""
         ...
 
+
 class ITranscriptionController(ABC):
     """
     一个专门处理转录相关 UI 事件的控制器。
     """
+
     @abstractmethod
-    def process_media(self, media_file_objs: list, chunk_length_s: int, output_formats: list):
+    def process_media(
+        self, media_file_objs: list, chunk_length_s: int, output_formats: list
+    ):
         """处理上传的视频/音频文件，生成 SRT 字幕文件。
         ARGS:
             media_file_objs: Gradio 上传的视频/音频文件对象列表。
@@ -134,10 +150,109 @@ class ITranscriptionController(ABC):
         YIELDS:
             状态消息 (str), 输出 SRT 文件路径列表 (list), SRT 内容预览 (str)。
         """
+
     ...
 
-    
+    @abstractmethod
+    def create_zip_archive(self, file_objs: list) -> str:
+        """
+        将列表中的文件打包成 ZIP 文件。
+        ARGS:
+            file_objs: Gradio 文件对象列表 (包含 .name 路径属性)
+        RETURNS:
+            生成的 ZIP 文件路径 (str)
+        """
+        ...
 
+
+class ISubtitleEditorController(ABC):
+    @abstractmethod
+    def load_subtitle_file(self, file_objs: list):
+        """加载字幕文件并解析为表格数据"""
+        ...
+
+    @abstractmethod
+    def apply_batch_corrections(self, subtitle_data, correction_table):
+        """应用校对本中的批量替换逻辑"""
+        ...
+
+    @abstractmethod
+    def save_subtitles(self, subtitle_data, original_filename: str):
+        """将表格数据保存回字幕文件"""
+        ...
+
+    @abstractmethod
+    def load_corrections(self) -> list:
+        """从本地加载校对本数据"""
+        ...
+
+    @abstractmethod
+    def save_corrections(self, correction_table_data) -> None:
+        """保存校对本数据到本地"""
+        ...
+
+
+class ITranslationService(ABC):
+    @abstractmethod
+    def translate_segments(
+        self,
+        segments: list,
+        target_lang: str,
+        api_key: str,
+        base_url: str,
+        model: str,
+        is_bilingual: bool,
+        proxy: str = None,
+        concurrency: int = 5,
+        chunk_size: int = 30,
+    ) -> list:
+        """调用大模型翻译字幕段落"""
+        ...
+
+    @abstractmethod
+    def segment_subtitles(
+        self,
+        segments: list,
+        api_key: str,
+        base_url: str,
+        model: str,
+        proxy: str = None,
+        concurrency: int = 3,
+        chunk_size: int = 50,
+    ) -> list:
+        """调用大模型进行智能断句"""
+        ...
+
+
+class ITranslationController(ABC):
+    @abstractmethod
+    def handle_translation(
+        self,
+        file_objs: list,
+        api_key: str,
+        base_url: str,
+        model_name: str,
+        proxy: str = None,
+        concurrency: int = 3,
+        chunk_size: int = 50,
+
+    ):
+        """处理翻译 UI 事件"""
+        ...
+
+    @abstractmethod
+    def handle_ai_segmentation(
+        self,
+        file_objs: list,
+        api_key: str,
+        base_url: str,
+        model_name: str,
+        proxy: str = None,
+        concurrency: int = 3,
+        chunk_size: int = 50,
+    ):
+        """处理 AI 断句 UI 事件"""
+        ...
 
 
 class IApplication(ABC):
@@ -168,7 +283,7 @@ class IApplication(ABC):
     def subtitle_generator(self) -> ISubtitleGenerator:
         """获取字幕生成服务实例。"""
         ...
-        
+
     @property
     @abstractmethod
     def model_controller(self) -> IModelController:
@@ -179,4 +294,16 @@ class IApplication(ABC):
     @abstractmethod
     def transcription_controller(self) -> ITranscriptionController:
         """获取转录控制器实例。"""
+        ...
+
+    @property
+    @abstractmethod
+    def subtitle_editor_controller(self) -> ISubtitleEditorController:
+        """获取字幕编辑控制器实例。"""
+        ...
+
+    @property
+    @abstractmethod
+    def translation_controller(self) -> ITranslationController:
+        """获取翻译控制器实例。"""
         ...

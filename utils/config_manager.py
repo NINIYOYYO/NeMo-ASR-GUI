@@ -10,11 +10,15 @@ class ConfigManager(IConfigManager):
     
     CONFIG_FILENAME = "config.json"
     DEFAULT_CONFIG = {
-            "local_model_path": None,
-            "chunk_length_s": 60,
-            "cloud_model_name": "nvidia/parakeet-tdt-0.6b-v2",
-            "language": "zh",
-        } 
+        "local_model_path": None,
+        "chunk_length_s": 60,
+        "cloud_model_name": "nvidia/parakeet-tdt-0.6b-v2",
+        "language": "zh",
+        "api_key": "",
+        "base_url": "https://api.openai.com/v1",
+        "llm_model": "gpt-5.2",
+        "proxy": ""
+    }
     
     def __init__(self, base_dir=None) -> None:
         if not base_dir:
