@@ -1,10 +1,14 @@
-import openai
-import httpx
-import json
 import asyncio
+import json
 import re
+from typing import Any
+
+import httpx
+import openai
+
 from interfaces import ITranslationService
 from utils.logger import logger
+
 
 class TranslationService(ITranslationService):
     """
@@ -37,7 +41,7 @@ class TranslationService(ITranslationService):
         api_key: str,
         base_url: str,
         model: str,
-        proxy: str = None,
+        proxy: str | None = None,
         is_json: bool = True,
     ):
         """底层异步调用"""
@@ -51,7 +55,7 @@ class TranslationService(ITranslationService):
         # 1. 适配 Gemini 原生接口
         if "generativelanguage.googleapis.com" in base_url:
             url = f"{base_url}/models/{model}:generateContent?key={api_key}"
-            payload = {
+            payload: dict[str, Any] = {
                 "contents": [{"parts": [{"text": prompt}]}],
                 "generationConfig": {
                     "responseMimeType": "application/json" if is_json else "text/plain",
@@ -69,7 +73,7 @@ class TranslationService(ITranslationService):
                     return result["candidates"][0]["content"]["parts"][0]["text"]
                 except KeyError:
                     # 偶尔 Gemini 会因为安全原因返回空，抛出异常触发重试
-                    raise ValueError(f"Gemini 返回空结果 (可能触发安全拦截): {result}")
+                    raise ValueError(f"Gemini 返回空结果 (可能触发安全拦截): {result}") from None
 
         # 2. 适配 OpenAI 兼容接口 (硅基流动/DeepSeek等)
         else:
@@ -91,10 +95,10 @@ class TranslationService(ITranslationService):
         """
         核心处理器
         """
-        api_key = kwargs.get("api_key")
-        base_url = kwargs.get("base_url")
-        model = kwargs.get("model")
-        proxy = kwargs.get("proxy")
+        api_key: str = kwargs["api_key"]
+        base_url: str = kwargs["base_url"]
+        model: str = kwargs["model"]
+        proxy: str | None = kwargs.get("proxy")
         
         source_texts = [s["segment"] for s in chunk]
 
@@ -108,7 +112,7 @@ class TranslationService(ITranslationService):
                     # 1. 构建输入字典 {"0": "text1", "1": "text2"}
                     input_map = {str(i): text for i, text in enumerate(source_texts)}
                     
-                    prompt = self._build_translation_prompt(input_map, kwargs.get("target_lang"))
+                    prompt = self._build_translation_prompt(input_map, kwargs["target_lang"])
                     
                     raw_response = await self._call_llm_async(
                         prompt, api_key, base_url, model, proxy, is_json=True
@@ -118,7 +122,7 @@ class TranslationService(ITranslationService):
                     try:
                         data = json.loads(self._extract_json(raw_response))
                     except json.JSONDecodeError:
-                        raise ValueError(f"模型未返回有效 JSON: {raw_response[:50]}...")
+                        raise ValueError(f"模型未返回有效 JSON: {raw_response[:50]}...") from None
                     
                     # 3. 兼容性处理：有些模型会把结果包在 'translations' 键里，有些直接返回字典
                     result_map = data
@@ -170,7 +174,7 @@ class TranslationService(ITranslationService):
                 wait_time = (2 ** attempt) + 1
                 error_str = str(e)
                 if "429" in error_str or "Too Many Requests" in error_str:
-                    logger.warning(f"触发 API 频率限制 (429)，强制等待 20 秒...")
+                    logger.warning("触发 API 频率限制 (429)，强制等待 20 秒...")
                     wait_time = 20
 
                 logger.warning(f"[重试 {attempt}/{self.max_retries}] {task_type} 失败: {e}. {wait_time}s 后重试...")
@@ -183,9 +187,10 @@ class TranslationService(ITranslationService):
 
     async def translate_segments(
         self, segments: list, target_lang: str, api_key: str, base_url: str, model: str,
-        is_bilingual: bool, proxy: str = None, concurrency: int = 5, chunk_size: int = 30,
+        is_bilingual: bool, proxy: str | None = None, concurrency: int = 5, chunk_size: int = 30,
     ):
-        if not segments: return []
+        if not segments:
+            return []
         semaphore = asyncio.Semaphore(concurrency)
         chunks = [segments[i : i + chunk_size] for i in range(0, len(segments), chunk_size)]
 
@@ -203,9 +208,10 @@ class TranslationService(ITranslationService):
 
     async def segment_subtitles(
         self, segments: list, api_key: str, base_url: str, model: str,
-        proxy: str = None, concurrency: int = 3, chunk_size: int = 50,
+        proxy: str | None = None, concurrency: int = 3, chunk_size: int = 50,
     ):
-        if not segments: return []
+        if not segments:
+            return []
         semaphore = asyncio.Semaphore(concurrency)
         chunks = [segments[i : i + chunk_size] for i in range(0, len(segments), chunk_size)]
 
@@ -258,7 +264,8 @@ class TranslationService(ITranslationService):
         for seg in original_segments:
             text = seg["segment"]
             clean_text = text.replace(" ", "").replace("\n", "").replace("\r", "")
-            if not clean_text: continue
+            if not clean_text:
+                continue
             
             duration = seg["end"] - seg["start"]
             if len(clean_text) > 0:
@@ -274,12 +281,15 @@ class TranslationService(ITranslationService):
 
         for part in parts:
             part_text = part.strip()
-            if not part_text: continue
+            if not part_text:
+                continue
 
             part_len_clean = len(part_text.replace(" ", "").replace("\n", "").replace("\r", ""))
-            if part_len_clean == 0: continue
+            if part_len_clean == 0:
+                continue
             
-            if cursor >= len(atomic_chars): break
+            if cursor >= len(atomic_chars):
+                break
 
             start_idx = cursor
             end_idx = min(cursor + part_len_clean, len(atomic_chars))
@@ -298,4 +308,4 @@ class TranslationService(ITranslationService):
             logger.warning("AI 断句对齐失败，回退到原始分段")
             return original_segments
 
-        return new_segments
+        return new_segments

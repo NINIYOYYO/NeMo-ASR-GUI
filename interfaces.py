@@ -1,10 +1,14 @@
 from abc import ABC, abstractmethod
+from typing import Any
 
 
 class IASRService(ABC):
     """
     封装所有与 NeMo ASR 模型相关的操作。
     """
+
+    # 推理设备 (torch.device)，UI 层用于显示 GPU/CPU 状态
+    device: Any
 
     @property
     @abstractmethod
@@ -89,6 +93,16 @@ class ISubtitleGenerator(ABC):
         ...
 
     @abstractmethod
+    def format_time(self, seconds: float, separator: str = ",") -> float | str:
+        """将秒格式化为 HH:MM:SS,mmm 字符串（公开 API，供编辑器等复用）"""
+        ...
+
+    @abstractmethod
+    def srt_time_to_seconds(self, time_str: str) -> float:
+        """将 SRT 时间字符串 (00:00:00,000) 转换为秒（公开 API）"""
+        ...
+
+    @abstractmethod
     def parse_srt(self, srt_content: str) -> list:
         """
         解析 SRT 字幕内容为时间戳列表。
@@ -106,7 +120,7 @@ class IAudioService(ABC):
     """
 
     @abstractmethod
-    def extract_audio_from_video(self, input_media_path: str) -> str:
+    def extract_audio_from_video(self, input_media_path: str) -> str | None:
         """
         使用 ffmpeg 从视频文件中提取音频并转换为 WAV 格式。
         返回提取的音频文件路径，或在失败时返回 None。
@@ -140,27 +154,35 @@ class ITranscriptionController(ABC):
 
     @abstractmethod
     def process_media(
-        self, media_file_objs: list, chunk_length_s: int, output_formats: list
+        self,
+        media_file_objs: list,
+        chunk_length_s: int,
+        output_formats: list,
+        word_output_formats: list,
+        enable_split: bool = False,
+        max_chars: int = 0,
     ):
-        """处理上传的视频/音频文件，生成 SRT 字幕文件。
+        """处理上传的视频/音频文件，生成字幕文件。
         ARGS:
             media_file_objs: Gradio 上传的视频/音频文件对象列表。
             chunk_length_s: 音频分块长度（秒）。
-            outpu_formats: 输出字幕格式列表 (e.g., ['srt', 'vtt'])
+            output_formats: 输出字幕格式列表 (e.g., ['srt', 'vtt'])
+            word_output_formats: 逐词/逐字级额外输出格式列表 (e.g., ['word_srt'])
+            enable_split: 是否启用长字幕拆分。
+            max_chars: 拆分时每条字幕的最大字符数。
         YIELDS:
-            状态消息 (str), 输出 SRT 文件路径列表 (list), SRT 内容预览 (str)。
+            状态消息 (str), 输出字幕文件路径列表 (list), 字幕内容预览 (str)。
         """
-
-    ...
+        ...
 
     @abstractmethod
-    def create_zip_archive(self, file_objs: list) -> str:
+    def create_zip_archive(self, file_objs: list) -> str | None:
         """
         将列表中的文件打包成 ZIP 文件。
         ARGS:
             file_objs: Gradio 文件对象列表 (包含 .name 路径属性)
         RETURNS:
-            生成的 ZIP 文件路径 (str)
+            生成的 ZIP 文件路径 (str)，失败时返回 None
         """
         ...
 
@@ -177,8 +199,14 @@ class ISubtitleEditorController(ABC):
         ...
 
     @abstractmethod
-    def save_subtitles(self, subtitle_data, original_filename: str):
-        """将表格数据保存回字幕文件"""
+    def save_subtitles(self, subtitle_data, original_file_obj):
+        """将表格数据保存回字幕文件。
+        ARGS:
+            subtitle_data: 编辑表格数据 (DataFrame 或 list)。
+            original_file_obj: 原始上传文件对象（或对象列表），用于推导输出文件名。
+        RETURNS:
+            保存后的文件路径 (str)，失败时返回 None。
+        """
         ...
 
     @abstractmethod
@@ -194,7 +222,7 @@ class ISubtitleEditorController(ABC):
 
 class ITranslationService(ABC):
     @abstractmethod
-    def translate_segments(
+    async def translate_segments(
         self,
         segments: list,
         target_lang: str,
@@ -202,7 +230,7 @@ class ITranslationService(ABC):
         base_url: str,
         model: str,
         is_bilingual: bool,
-        proxy: str = None,
+        proxy: str | None = None,
         concurrency: int = 5,
         chunk_size: int = 30,
     ) -> list:
@@ -210,13 +238,13 @@ class ITranslationService(ABC):
         ...
 
     @abstractmethod
-    def segment_subtitles(
+    async def segment_subtitles(
         self,
         segments: list,
         api_key: str,
         base_url: str,
         model: str,
-        proxy: str = None,
+        proxy: str | None = None,
         concurrency: int = 3,
         chunk_size: int = 50,
     ) -> list:
@@ -226,32 +254,39 @@ class ITranslationService(ABC):
 
 class ITranslationController(ABC):
     @abstractmethod
-    def handle_translation(
+    async def handle_translation(
         self,
         file_objs: list,
+        target_lang: str,
+        is_bilingual: bool,
         api_key: str,
         base_url: str,
         model_name: str,
-        proxy: str = None,
-        concurrency: int = 3,
-        chunk_size: int = 50,
-
+        proxy: str | None = None,
+        concurrency: int = 5,
+        chunk_size: int = 30,
     ):
-        """处理翻译 UI 事件"""
+        """处理翻译 UI 事件。
+        RETURNS:
+            (状态消息 str, 翻译后文件路径列表 list, 内容预览 str)
+        """
         ...
 
     @abstractmethod
-    def handle_ai_segmentation(
+    async def handle_ai_segmentation(
         self,
         file_objs: list,
         api_key: str,
         base_url: str,
         model_name: str,
-        proxy: str = None,
+        proxy: str | None = None,
         concurrency: int = 3,
         chunk_size: int = 50,
     ):
-        """处理 AI 断句 UI 事件"""
+        """处理 AI 断句 UI 事件。
+        RETURNS:
+            (状态消息 str, 断句后文件路径列表 list)
+        """
         ...
 
 

@@ -1,9 +1,11 @@
-import gradio as gr
 import os
+
+import gradio as gr
 import torch
+
 from interfaces import IApplication
 from utils.logger import logger
-from utils.translator import t, set_language, get_language
+from utils.translator import set_language, t
 
 initial_model_status = t("model.not_loaded")
 

@@ -1,8 +1,14 @@
+# ============================================================
+# 依赖已迁移至 pyproject.toml 统一管理（推荐使用 uv）：
+#   uv sync            # 安装运行依赖
+#   uv sync --group dev  # 连同开发工具 (ruff/mypy/pytest/pre-commit)
+#   uv lock            # 重新生成锁文件
+# 本文件仅为兼容 install_dependencies.bat / pip 用户保留。
+# ============================================================
 nemo_toolkit[asr]
-# Pydub for audio manipulation
 pydub>=0.25.1
-
-# Gradio for the web interface
 gradio>=5.29.0
-
-openai==2.16.0
+openai>=1.60,<3
+httpx>=0.27
+pandas>=2.0
+pyyaml>=6.0

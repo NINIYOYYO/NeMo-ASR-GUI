@@ -1,24 +1,18 @@
-from interfaces import (
-    IApplication,
-    IAudioService,
-    IConfigManager,
-    ISubtitleGenerator,
-    IASRService,
-    IModelController,
-    ITranscriptionController,
-    
-    
-)
+from app_ui import create_ui
 
 # 导入控制器类
 from controllers.model_controller import ModelController
-from controllers.transcription_controller import TranscriptionController
 from controllers.subtitle_editor_controller import SubtitleEditorController
-from core.translation_service import TranslationService
+from controllers.transcription_controller import TranscriptionController
 from controllers.translation_controller import TranslationController
-
-from app_ui import create_ui
-from utils.logger import logger
+from core.translation_service import TranslationService
+from interfaces import (
+    IApplication,
+    IASRService,
+    IAudioService,
+    IConfigManager,
+    ISubtitleGenerator,
+)
 
 
 class Application(IApplication):

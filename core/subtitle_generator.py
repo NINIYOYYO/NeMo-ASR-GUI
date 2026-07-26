@@ -1,6 +1,7 @@
 
-from interfaces import ISubtitleGenerator
 import re
+
+from interfaces import ISubtitleGenerator
 
 
 class SubtitleService(ISubtitleGenerator):
@@ -24,7 +25,7 @@ class SubtitleService(ISubtitleGenerator):
         else:
             raise ValueError(f"不支持的字幕格式: {format_type}")
 
-    def _format_time(self, seconds, separator=",") -> str:
+    def format_time(self, seconds: float, separator: str = ",") -> str:
         """
         格式化时间: HH:MM:SS,mmm (SRT) 或 HH:MM:SS.mmm (VTT)
         先整体四舍五入到毫秒再拆分，避免浮点截断误差（如 1.001s 被截成 1,000）
@@ -50,8 +51,8 @@ class SubtitleService(ISubtitleGenerator):
         content = ""
         for i, stamp in enumerate(segment_timestamps):
             subtitle_number = i + 1
-            start_time_srt = self._format_time(stamp["start"])
-            end_time_srt = self._format_time(stamp["end"])
+            start_time_srt = self.format_time(stamp["start"])
+            end_time_srt = self.format_time(stamp["end"])
             segment_text = stamp["segment"]
             srt_block = f"{subtitle_number}\n{start_time_srt} --> {end_time_srt}\n{segment_text}\n\n"
             content += srt_block
@@ -67,8 +68,8 @@ class SubtitleService(ISubtitleGenerator):
         """
         content = "WEBVTT\n\n"
         for stamp in segment_timestamps:
-            start_time_vtt = self._format_time(stamp["start"], separator=".")
-            end_time_vtt = self._format_time(stamp["end"], separator=".")
+            start_time_vtt = self.format_time(stamp["start"], separator=".")
+            end_time_vtt = self.format_time(stamp["end"], separator=".")
             segment_text = stamp["segment"].strip()
             vtt_block = f"{start_time_vtt} --> {end_time_vtt}\n{segment_text}\n\n"
             content += vtt_block
@@ -131,7 +132,8 @@ class SubtitleService(ISubtitleGenerator):
 
             for w in words_in_seg:
                 word_text = w["word"].strip()
-                if not word_text: continue
+                if not word_text:
+                    continue
                 
                 content += self._render_srt_block(
                     word_counter, 
@@ -161,7 +163,8 @@ class SubtitleService(ISubtitleGenerator):
 
             for c in chars_in_seg:
                 char_text = c["char"]
-                if not char_text: continue
+                if not char_text:
+                    continue
                 
                 content += self._render_srt_block(
                     char_counter, 
@@ -217,7 +220,8 @@ class SubtitleService(ISubtitleGenerator):
         """
         格式化 ASS 时间: H:MM:SS.cc (centiseconds)
         """
-        if seconds < 0: seconds = 0
+        if seconds < 0:
+            seconds = 0
         hours = int(seconds // 3600)
         minutes = int((seconds % 3600) // 60)
         secs = int(seconds % 60)
@@ -229,7 +233,7 @@ class SubtitleService(ISubtitleGenerator):
         return f"{hours}:{minutes:02}:{secs:02}.{centiseconds:02}"
     
     def _render_srt_block(self, index, start, end, text) -> str:
-        return f"{index}\n{self._format_time(start)} --> {self._format_time(end)}\n{text}\n\n"
+        return f"{index}\n{self.format_time(start)} --> {self.format_time(end)}\n{text}\n\n"
     
 
 
@@ -244,14 +248,20 @@ class SubtitleService(ISubtitleGenerator):
             index, start_str, end_str, text = match.groups()
             segments.append({
                 "index": int(index),
-                "start": self._srt_time_to_seconds(start_str),
-                "end": self._srt_time_to_seconds(end_str),
+                "start": self.srt_time_to_seconds(start_str),
+                "end": self.srt_time_to_seconds(end_str),
                 "segment": text.strip()
             })
         return segments
 
-    def _srt_time_to_seconds(self, time_str: str) -> float:
+    def srt_time_to_seconds(self, time_str: str) -> float:
         """SRT 时间格式 (00:00:00,000) 转秒"""
         hours, mins, secs_ms = time_str.split(':')
         secs, ms = secs_ms.split(',')
-        return int(hours) * 3600 + int(mins) * 60 + int(secs) + int(ms) / 1000.0
+        return int(hours) * 3600 + int(mins) * 60 + int(secs) + int(ms) / 1000.0
+    # --- 向后兼容别名（旧代码可能调用私有名） ---
+    def _format_time(self, seconds, separator=",") -> str:
+        return self.format_time(seconds, separator)
+
+    def _srt_time_to_seconds(self, time_str: str) -> float:
+        return self.srt_time_to_seconds(time_str)

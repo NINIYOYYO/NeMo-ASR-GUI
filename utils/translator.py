@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
-from utils.logger import logger
 
+from utils.logger import logger
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -12,7 +12,8 @@ class Translator:
     """国际化翻译器"""
 
     _instance = None
-    _current_locale = "zh" # 默认语言
+    _current_locale = "zh"  # 默认语言
+    _initialized: bool = False
 
     def __new__(cls, locale=None):
         """实现单例模式，确保只有一个翻译器实例"""
@@ -106,4 +107,4 @@ def set_language(locale: str):
 
 def get_language() -> str:
     """获取当前语言"""
-    return t.get_current_locale()
+    return t.get_current_locale()

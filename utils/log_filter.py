@@ -1,8 +1,8 @@
 import logging
 import re
-from typing import List, Dict
-import yaml
 from pathlib import Path
+
+import yaml
 
 
 class ConfigurableFilter(logging.Filter):
@@ -10,9 +10,9 @@ class ConfigurableFilter(logging.Filter):
     一个可配置的日志过滤器，允许基于正则表达式和日志级别过滤日志消息。
     """
 
-    def __init__(self, config_path: str = None) -> None:
+    def __init__(self, config_path: str | None = None) -> None:
         super().__init__()
-        self.message_patterns = []
+        self.message_patterns: list = []
 
         if config_path:
             self._load_config(config_path)
@@ -51,15 +51,14 @@ class ConfigurableFilter(logging.Filter):
         return True
     
 
-def apply_third_party_filters(config_path: str = None):
+def apply_third_party_filters(config_path: str | None = None):
     """
     应用第三方库的日志过滤器。
     """
-    if not config_path:
-        config_path = Path(__file__).parent.parent / "logging_filter_config.yaml"
-    
+    path = Path(config_path) if config_path else Path(__file__).parent.parent / "logging_filter_config.yaml"
+
     try:
-        with open(config_path, 'r', encoding='utf-8') as f:
+        with open(path, 'r', encoding='utf-8') as f:
             config = yaml.safe_load(f)
             
         for logger_config in config.get('third_party_loggers', []):

@@ -1,9 +1,12 @@
-import os
 import json
-import pandas as pd
+import os
 from pathlib import Path
+
+import pandas as pd
+
 from interfaces import ISubtitleEditorController, ISubtitleGenerator
 from utils.logger import logger
+
 
 class SubtitleEditorController(ISubtitleEditorController):
     def __init__(self, subtitle_service: ISubtitleGenerator):
@@ -31,8 +34,8 @@ class SubtitleEditorController(ISubtitleEditorController):
             
             segments = self.subtitle_service.parse_srt(content)
             df_data = [[s["index"], 
-                        self.subtitle_service._format_time(s["start"]), 
-                        self.subtitle_service._format_time(s["end"]), 
+                        self.subtitle_service.format_time(s["start"]), 
+                        self.subtitle_service.format_time(s["end"]), 
                         s["segment"]] for s in segments]
             
             return df_data, f"成功加载: {os.path.basename(file_path)}"
@@ -85,8 +88,8 @@ class SubtitleEditorController(ISubtitleEditorController):
                 start_str = str(row[1]).replace('.', ',')
                 end_str = str(row[2]).replace('.', ',')
                 segments.append({
-                    "start": self.subtitle_service._srt_time_to_seconds(start_str),
-                    "end": self.subtitle_service._srt_time_to_seconds(end_str),
+                    "start": self.subtitle_service.srt_time_to_seconds(start_str),
+                    "end": self.subtitle_service.srt_time_to_seconds(end_str),
                     "segment": str(row[3])
                 })
             
@@ -126,4 +129,4 @@ class SubtitleEditorController(ISubtitleEditorController):
                 json.dump(clean_data, f, ensure_ascii=False, indent=4)
             logger.info("校对本已保存")
         except Exception as e:
-            logger.error(f"保存校对本失败: {e}")
+            logger.error(f"保存校对本失败: {e}")

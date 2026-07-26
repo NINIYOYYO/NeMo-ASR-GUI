@@ -1,8 +1,8 @@
-import os
 import json
-from utils.logger import logger
-from interfaces import IConfigManager
+import os
 
+from interfaces import IConfigManager
+from utils.logger import logger
 
 
 class ConfigManager(IConfigManager):

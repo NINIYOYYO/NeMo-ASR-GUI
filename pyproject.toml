@@ -1,0 +1,80 @@
+[project]
+name = "parakeet-tdt-gui"
+version = "0.2.0"
+description = "基于 NVIDIA NeMo / Parakeet-TDT 的本地语音转录与字幕工作站（ASR + LLM 翻译 + 字幕编辑）"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "NINIYOYYO" }]
+requires-python = ">=3.10,<3.13"
+
+# 只声明代码中直接 import 的第三方库（间接依赖交给锁文件）
+dependencies = [
+    "nemo_toolkit[asr]>=2.0",
+    "torch>=2.1",           # GPU 用户请先按 README 安装对应 CUDA 版本的 torch
+    "gradio>=5.29.0",
+    "pydub>=0.25.1",
+    "openai>=1.60,<3",
+    "httpx>=0.27",
+    "pandas>=2.0",
+    "pyyaml>=6.0",
+]
+
+[project.urls]
+Repository = "https://github.com/NINIYOYYO/parakeet-tdt-0.6b-v2-SRT-GUI"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.8",
+    "mypy>=1.13",
+    "pre-commit>=4.0",
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24",
+    "respx>=0.21",
+    "types-PyYAML",
+]
+
+# ========================
+# Ruff：lint + import 整理
+# ========================
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+extend-exclude = [
+    "experiments",
+    "test.py", "test2.py", "test3.py", "test5.py",
+    "main2.py",
+]
+
+[tool.ruff.lint]
+# 起步规则集：pyflakes/pycodestyle 错误 + import 排序 + bugbear 常见坑
+select = ["E4", "E7", "E9", "F", "I", "B"]
+ignore = [
+    "E722", # bare except：现有代码大量使用，后续逐步收紧
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["controllers", "core", "utils", "interfaces", "application", "app_ui"]
+
+# ========================
+# Mypy：先宽松起步，逐步收紧
+# ========================
+[tool.mypy]
+python_version = "3.10"
+files = ["main.py", "application.py", "app_ui.py", "interfaces.py", "controllers", "core", "utils"]
+ignore_missing_imports = true   # nemo/gradio/pydub 等无类型存根
+check_untyped_defs = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+no_implicit_optional = true
+# 后续目标：分模块开启 disallow_untyped_defs = true
+
+# ========================
+# Pytest
+# ========================
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+[[tool.mypy.overrides]]
+module = "yaml"
+ignore_missing_imports = true

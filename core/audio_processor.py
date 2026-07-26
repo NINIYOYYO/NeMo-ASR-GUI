@@ -1,12 +1,11 @@
 
+import os
 import subprocess
 import tempfile
-import os
+
 from interfaces import IAudioService
 from utils.exceptions import AudioProcessingError
 from utils.logger import logger
-
-
 
 
 class AudioService(IAudioService):
@@ -27,10 +26,10 @@ class AudioService(IAudioService):
             logger.error(
                 "错误：ffmpeg 未检测到或未正确安装。请安装 ffmpeg 并确保其在系统 PATH 中。"
             )
-            raise AudioProcessingError("FFmpeg 未安装或不可用。")
+            raise AudioProcessingError("FFmpeg 未安装或不可用。") from None
 
 
-    def extract_audio_from_video(self, input_media_path: str) -> str:
+    def extract_audio_from_video(self, input_media_path: str) -> str | None:
         """
         使用 ffmpeg 从视频文件中提取音频并转换为 WAV 格式。
         返回提取的音频文件路径，或在失败时返回 None。
@@ -54,7 +53,7 @@ class AudioService(IAudioService):
             output_audio_path,
         ]
         try:
-            process = subprocess.run(
+            subprocess.run(
                 ffmpeg_command, check=True, capture_output=True, text=True, errors="ignore"
             )
             logger.info(f"音频提取成功到: {output_audio_path}")

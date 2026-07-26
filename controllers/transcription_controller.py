@@ -2,12 +2,11 @@
 import os
 import re
 import time
-from pathlib import Path
 import zipfile
-from interfaces import IASRService
-from interfaces import ITranscriptionController, IAudioService, ISubtitleGenerator
-from utils.exceptions import TranscriptionError
-from utils.logger import logger 
+from pathlib import Path
+
+from interfaces import IASRService, IAudioService, ISubtitleGenerator, ITranscriptionController
+from utils.logger import logger
 
 
 class TranscriptionController(ITranscriptionController):
@@ -144,7 +143,7 @@ class TranscriptionController(ITranscriptionController):
         logger.info(status_message)
         yield status_message, output_files_all if output_files_all else None, generated_content_preview
     
-    def create_zip_archive(self, file_objs: list) -> str:
+    def create_zip_archive(self, file_objs: list) -> str | None:
         """将生成的文件打包成 ZIP"""
         if not file_objs:
             logger.warning("没有文件可打包")

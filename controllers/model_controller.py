@@ -1,9 +1,6 @@
 
-from interfaces import IASRService, IConfigManager
-from interfaces import IModelController
+from interfaces import IASRService, IConfigManager, IModelController
 from utils.exceptions import ModelLoadError
-
-
 
 
 class ModelController(IModelController):

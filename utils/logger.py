@@ -1,13 +1,12 @@
+import atexit
 import logging
 import logging.handlers
+import os
 import queue
 import sys
-import os
-import atexit
 from pathlib import Path
 
 from utils.log_filter import ConfigurableFilter, apply_third_party_filters
-
 
 _listener = None
 _is_initialized = False
@@ -56,7 +55,7 @@ def _initialize_logging_system():
         return
     
     # 1. 创建一个队列，这是生产者和消费者之间的“邮箱”
-    log_queue = queue.Queue(-1)  # 无限大小的队列
+    log_queue: queue.Queue = queue.Queue(-1)  # 无限大小的队列
 
 
     # 2. 创建一个处理器，将日志消息发送到队列

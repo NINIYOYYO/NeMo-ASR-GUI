@@ -1,6 +1,8 @@
-from abc import ABC, abstractmethod
-from utils.logger import logger
 import textwrap
+from abc import ABC, abstractmethod
+
+from utils.logger import logger
+
 
 class ITranscriptionStrategy(ABC):
     """
@@ -260,4 +262,4 @@ class JapaneseCharStrategy(ITranscriptionStrategy):
                 current_segment_objs = []
                 current_segment_start = None
 
-        return segments
+        return segments

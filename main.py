@@ -1,11 +1,9 @@
-from utils.config_manager import ConfigManager
+from application import Application
 from core.asr_service import ASRService
 from core.audio_processor import AudioService
 from core.subtitle_generator import SubtitleService
-
-from application import Application
+from utils.config_manager import ConfigManager
 from utils.logger import logger
-
 
 
 def create_app() -> Application:

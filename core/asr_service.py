@@ -1,24 +1,26 @@
-import torch
-import nemo.collections.asr as nemo_asr
-from pydub import AudioSegment
-import tempfile
-import os
-from utils.logger import logger
-from interfaces import IASRService
-from utils.exceptions import ModelLoadError
-from core.post_processors import DefaultSegmentStrategy, JapaneseCharStrategy
 import gc
+import os
+import tempfile
+from typing import Any
+
+import nemo.collections.asr as nemo_asr
+import torch
+from pydub import AudioSegment
+
+from core.post_processors import DefaultSegmentStrategy, ITranscriptionStrategy, JapaneseCharStrategy
+from interfaces import IASRService
+from utils.logger import logger
 
 
 class ASRService(IASRService):
     """封装所有与 NeMo ASR 模型相关的操作。"""
 
     def __init__(self) -> None:
-        self.model = None
+        self.model: Any = None
         self.device  = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-          # 当前使用的处理策略，默认为普通策略
-        self.processor_strategy = DefaultSegmentStrategy()
+        # 当前使用的处理策略，默认为普通策略
+        self.processor_strategy: ITranscriptionStrategy = DefaultSegmentStrategy()
         logger.info(f"ASRservice 初始化，使用设备: {self.device}")
 
 

@@ -1,10 +1,11 @@
 import os
 from pathlib import Path
+
 from interfaces import (
-    ITranslationController,
-    ISubtitleGenerator,
-    ITranslationService,
     IConfigManager,
+    ISubtitleGenerator,
+    ITranslationController,
+    ITranslationService,
 )
 from utils.logger import logger
 
@@ -38,7 +39,7 @@ class TranslationController(ITranslationController):
         api_key: str,
         base_url: str,
         model_name: str,
-        proxy: str = None,
+        proxy: str | None = None,
         concurrency: int = 5,
         chunk_size: int = 30,
     ):
@@ -100,7 +101,7 @@ class TranslationController(ITranslationController):
         api_key: str,
         base_url: str,
         model_name: str,
-        proxy: str = None,
+        proxy: str | None = None,
         concurrency: int = 3,
         chunk_size: int = 50,
     ):
