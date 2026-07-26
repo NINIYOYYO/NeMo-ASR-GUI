@@ -27,11 +27,14 @@ class SubtitleService(ISubtitleGenerator):
     def _format_time(self, seconds, separator=",") -> str:
         """
         格式化时间: HH:MM:SS,mmm (SRT) 或 HH:MM:SS.mmm (VTT)
+        先整体四舍五入到毫秒再拆分，避免浮点截断误差（如 1.001s 被截成 1,000）
         """
-        hours = int(seconds // 3600)
-        minutes = int((seconds % 3600) // 60)
-        secs = int(seconds % 60)
-        milliseconds = int((seconds * 1000) % 1000)
+        if seconds < 0:
+            seconds = 0
+        total_ms = int(round(seconds * 1000))
+        hours, rem = divmod(total_ms, 3600_000)
+        minutes, rem = divmod(rem, 60_000)
+        secs, milliseconds = divmod(rem, 1000)
         return f"{hours:02}:{minutes:02}:{secs:02}{separator}{milliseconds:03}"
 
 
@@ -251,4 +254,4 @@ class SubtitleService(ISubtitleGenerator):
         """SRT 时间格式 (00:00:00,000) 转秒"""
         hours, mins, secs_ms = time_str.split(':')
         secs, ms = secs_ms.split(',')
-        return int(hours) * 3600 + int(mins) * 60 + int(secs) + int(ms) / 1000.0
+        return int(hours) * 3600 + int(mins) * 60 + int(secs) + int(ms) / 1000.0

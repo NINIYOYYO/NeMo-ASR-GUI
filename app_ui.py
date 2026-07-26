@@ -25,9 +25,10 @@ def create_ui(app: IApplication) -> gr.Blocks:
     # --- 初始化配置 ---
     initial_config = app.config_manager.get_config_all()
     saved_model_path = initial_config.get("local_model_path", "")
-    saved_cloud_model = initial_config.get("cloud_model_name")
-    saved_language = initial_config.get("language", "zh")
-    initial_chunk_length = initial_config.get("chunk_length_s")
+    # 使用 or 兜底：防止配置文件中显式存了 null 导致 get 的默认值失效
+    saved_cloud_model = initial_config.get("cloud_model_name") or "nvidia/parakeet-tdt-0.6b-v2"
+    saved_language = initial_config.get("language") or "zh"
+    initial_chunk_length = initial_config.get("chunk_length_s") or 60
 
     saved_api_key = initial_config.get("api_key", "")
     saved_base_url = initial_config.get("base_url", "https://api.openai.com/v1")
@@ -40,30 +41,31 @@ def create_ui(app: IApplication) -> gr.Blocks:
     # --- 自动加载模型并设置初始状态 (国际化) ---
     global initial_model_status
     if saved_model_path is not None:
-        if saved_model_path == "":  # NGC 模型
-            logger.info(t("model.loading_cloud", model_name=saved_cloud_model))
-            initial_model_status = app.asr_service.load_model_from_ngc(
-                saved_cloud_model
-            )
-        elif os.path.exists(saved_model_path):  # 本地模型存在
-            logger.info(t("model.loading_local", path=saved_model_path))
-            initial_model_status = app.asr_service.load_model_from_local(
-                saved_model_path
-            )
-        else:
-            initial_model_status = t(
-                "model.error_path_not_found", path=saved_model_path
-            )
+        try:
+            if saved_model_path == "":  # NGC 模型
+                logger.info(t("model.loading_cloud", model_name=saved_cloud_model))
+                initial_model_status = app.asr_service.load_model_from_ngc(
+                    saved_cloud_model
+                )
+            elif os.path.exists(saved_model_path):  # 本地模型存在
+                logger.info(t("model.loading_local", path=saved_model_path))
+                initial_model_status = app.asr_service.load_model_from_local(
+                    saved_model_path
+                )
+            else:
+                initial_model_status = t(
+                    "model.error_path_not_found", path=saved_model_path
+                )
+        except Exception as e:
+            # 自动加载失败不应阻止 UI 启动，用户可稍后在界面中手动加载
+            logger.error(f"启动时自动加载模型失败: {e}")
+            initial_model_status = f"自动加载模型失败: {e}"
 
     # --- 语言切换的核心函数 ---
     def change_language(lang):
         set_language(lang)
-        app.config_manager.save_config(
-            local_model_path=saved_model_path,
-            chunk_length=initial_chunk_length,
-            cloud_model_name=saved_cloud_model,
-            language=lang,
-        )
+        # 只保存语言本身，避免用启动时的旧值覆盖用户本次会话中更新过的模型配置
+        app.config_manager.save_config(language=lang)
         # 返回一个字典，键是UI组件，值是更新后的属性
         return {
             # 标题和描述
@@ -410,12 +412,6 @@ def create_ui(app: IApplication) -> gr.Blocks:
                 outputs=[subtitle_editor_df],
             )
 
-            apply_correction_btn.click(
-                fn=app.subtitle_editor_controller.apply_batch_corrections,
-                inputs=[subtitle_editor_df, correction_table],
-                outputs=[subtitle_editor_df],
-            )
-
             # 3. 保存导出
             save_edit_button.click(
                 fn=app.subtitle_editor_controller.save_subtitles,
@@ -430,7 +426,7 @@ def create_ui(app: IApplication) -> gr.Blocks:
                 outputs=[],
             ).then(lambda: gr.Info(t("editing.save_success_info")))
 
-            # 2. 批量替换逻辑 (保持不变，Controller里已经修复了兼容性)
+            # 2. 批量替换逻辑 (注意：此事件只绑定一次，重复绑定会导致每次点击执行两遍)
             apply_correction_btn.click(
                 fn=app.subtitle_editor_controller.apply_batch_corrections,
                 inputs=[subtitle_editor_df, correction_table],
@@ -644,4 +640,4 @@ def create_ui(app: IApplication) -> gr.Blocks:
             outputs=all_ui_outputs,
         )
 
-    return demo
+    return demo

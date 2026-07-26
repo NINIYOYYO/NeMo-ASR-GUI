@@ -2,3 +2,16 @@
 .gradio/
 __pycache__/
 *.pyc
+
+# 用户配置（包含 API Key 等敏感信息，切勿提交）
+config.json
+corrections.json
+
+# 运行产物
+logs/
+subtitles/
+
+# 模型文件（体积过大）
+*.nemo
+models--*/
+wheels/

@@ -61,6 +61,7 @@ class TranscriptionController(ITranscriptionController):
         output_files_all = []
         total_files = len(media_file_objs)
         start_time_total = time.time()
+        generated_content_preview = ""  # 提前初始化，防止所有文件都失败时最终 yield 引用未定义变量
 
         for i, media_file_obj in enumerate(media_file_objs):
             input_media_path = media_file_obj  # Gradio Video 对象具有 .name 属性表示路径
@@ -76,8 +77,9 @@ class TranscriptionController(ITranscriptionController):
                 yield f"状态：正在提取 {file_name} 的音频...", None, ""
                 extracted_audio_path = self.audio_service.extract_audio_from_video(input_media_path)
                 if not extracted_audio_path:
-                    yield "错误：音频提取失败。请检查视频文件或ffmpeg安装。", None, ""
-                    return
+                    # 单个文件提取失败时跳过该文件，继续处理批量队列中的其余文件
+                    yield f"错误：{file_name} 音频提取失败。请检查视频文件或ffmpeg安装。正在跳过此文件。", None, ""
+                    continue
 
                 chunk_length_ms = chunk_length_s * 1000
                 yield f"状态：正在转录音频 (分块大小: {chunk_length_s}秒)...", None, ""
@@ -97,7 +99,7 @@ class TranscriptionController(ITranscriptionController):
 
                 yield f"状态：正在生成字幕文件 ({', '.join(output_formats)})...", None, ""
 
-                generated_content_preview = "" # 用于在UI预览，默认只预览第一个格式
+                generated_content_preview = "" # 用于在UI预览，默认只预览第一个格式（每个文件重置）
 
                 if not os.path.exists(self.subtitles_folder_path):
                     os.makedirs(self.subtitles_folder_path, exist_ok=True)
@@ -134,11 +136,13 @@ class TranscriptionController(ITranscriptionController):
                         os.remove(extracted_audio_path)
                     except OSError as e_clean:
                         logger.warning(f"无法删除临时音频文件 {extracted_audio_path}: {e_clean}")
-   
-            elapsed_time_total = time.time() - start_time_total
-            status_message = f"处理完成。总耗时 {elapsed_time_total:.2f} 秒。生成{len(output_files_all)} 个字幕文件。"
-            logger.info(status_message)
-            yield status_message, output_files_all, generated_content_preview
+
+        # 最终汇总放在循环外：即使最后一个文件失败被跳过，
+        # 之前成功生成的字幕文件也能正常显示在下载列表中
+        elapsed_time_total = time.time() - start_time_total
+        status_message = f"处理完成。总耗时 {elapsed_time_total:.2f} 秒。生成{len(output_files_all)} 个字幕文件。"
+        logger.info(status_message)
+        yield status_message, output_files_all if output_files_all else None, generated_content_preview
     
     def create_zip_archive(self, file_objs: list) -> str:
         """将生成的文件打包成 ZIP"""
@@ -183,4 +187,4 @@ class TranscriptionController(ITranscriptionController):
     def _sanitize_filename(self, filename: str) -> str:
         # 替换 Windows/Linux 常见的非法字符
         return re.sub(r'[\\/*?:"<>|]', "_", filename)
-    
+    

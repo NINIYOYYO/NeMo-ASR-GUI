@@ -18,6 +18,23 @@ if not LOG_DIR.exists():
 
 
 
+def _create_default_filter():
+    """创建默认过滤器（当没有配置文件时）。
+    注意：必须定义在 _initialize_logging_system 调用它之前，
+    否则 yaml 配置文件缺失时会因函数未定义而导致启动崩溃。
+    """
+    class DefaultFilter(logging.Filter):
+        THIRD_PARTY = ('torio', 'matplotlib', 'graphviz', 'torch')
+
+        def filter(self, record):
+            # 只过滤第三方库的 DEBUG 日志
+            if record.name.startswith(self.THIRD_PARTY):
+                return record.levelno >= logging.WARNING
+            return True
+
+    return DefaultFilter()
+
+
 def stop_logging():
     """停止日志监听器并清理资源。"""
     global _listener
@@ -99,22 +116,7 @@ def _initialize_logging_system():
     _is_initialized = True
     atexit.register(stop_logging)# 注册 stop_logging，以便程序退出时自动调用
 
-    
-
     root_logger.info("日志系统已初始化。")
-
-    def _create_default_filter():
-        """创建默认过滤器（当没有配置文件时）"""
-        class DefaultFilter(logging.Filter):
-            THIRD_PARTY = ('torio', 'matplotlib', 'graphviz', 'torch')
-            
-            def filter(self, record):
-                # 只过滤第三方库的 DEBUG 日志
-                if record.name.startswith(self.THIRD_PARTY):
-                    return record.levelno >= logging.WARNING
-                return True
-        
-        return DefaultFilter()
 
 
 _initialize_logging_system()

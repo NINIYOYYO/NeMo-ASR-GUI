@@ -27,7 +27,7 @@ class ModelController(IModelController):
             status = self.services.load_model_from_local(path_from_input_box)
             if self.services.is_model_loaded:
                 self.config.save_config(
-                    local_model_path=path_from_input_box, chunk_length=chunk_val_from_slider,cloud_model_name=selected_cloud_model)
+                    local_model_path=path_from_input_box, chunk_length_s=chunk_val_from_slider, cloud_model_name=selected_cloud_model)
             return status
         except Exception as e:
             raise ModelLoadError(f"加载本地模型时出错: {e}") from e
@@ -38,7 +38,7 @@ class ModelController(IModelController):
 
             status = self.services.load_model_from_ngc(selected_cloud_model)
             if self.services.is_model_loaded:
-                self.config.save_config(local_model_path="", chunk_length=chunk_val_from_slider, cloud_model_name=selected_cloud_model)
+                self.config.save_config(local_model_path="", chunk_length_s=chunk_val_from_slider, cloud_model_name=selected_cloud_model)
             return status
         
         except Exception as e:

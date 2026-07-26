@@ -83,6 +83,9 @@ class ConfigManager(IConfigManager):
         for key, value in kwargs.items():
             if key in current_config:
                 current_config[key] = value
+            else:
+                # 未知键名不再静默丢弃，打警告方便及时发现调用方的键名拼写错误
+                logger.warning(f"save_config 收到未知配置键 '{key}'，已忽略。有效键: {list(self.DEFAULT_CONFIG.keys())}")
 
         try:
             with open(self.config_path, "w", encoding="utf-8") as config_file:
@@ -93,4 +96,4 @@ class ConfigManager(IConfigManager):
             logger.error(f"错误：保存配置文件 '{self.config_path}' 失败: {e}")
 
 
-   
+   

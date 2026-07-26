@@ -98,8 +98,11 @@ class ASRService(IASRService):
             self._update_strategy(model_name)
             return f"本地模型 '{model_name}' 加载成功。"
         except Exception as e:
+            # 与 load_model_from_ngc 保持一致：返回错误信息而不是抛异常，
+            # 避免启动时自动加载失败导致整个应用崩溃
             self.model = None
-            raise ModelLoadError(f"从本地路径加载模型失败: {e}") from e
+            logger.error(f"从本地路径加载模型失败: {e}")
+            return f"从本地路径加载模型 '{actual_path}' 失败: {e}"
         
     
     
@@ -130,7 +133,7 @@ class ASRService(IASRService):
             audio = AudioSegment.from_wav(audio_path)  # 假设已预处理为 WAV
             audio = audio.set_frame_rate(16000).set_channels(1)  # 确保格式
         except Exception as e:
-            logger.info(f"加载或处理音频文件 '{audio_path}' 时发生错误 (pydub): {e}")
+            logger.error(f"加载或处理音频文件 '{audio_path}' 时发生错误 (pydub): {e}")
             return []
 
         audio_duration_ms = len(audio)
@@ -167,10 +170,7 @@ class ASRService(IASRService):
                     all_results.extend(new_segments)
 
             except Exception as e:
-                logger.info(f"转录音频块 '{temp_chunk_file_path}' 时发生错误: {e}")
-                import traceback
-
-                traceback.print_exc()
+                logger.error(f"转录音频块 '{temp_chunk_file_path}' 时发生错误: {e}", exc_info=True)
             finally:
                 if temp_chunk_file_path and os.path.exists(temp_chunk_file_path):
                     try:
