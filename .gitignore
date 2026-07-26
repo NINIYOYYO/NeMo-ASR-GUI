@@ -15,3 +15,7 @@ subtitles/
 *.nemo
 models--*/
 wheels/
+
+# 历史实验脚本与待删除文件（不入库）
+experiments/
+_to_delete/
