@@ -1,8 +1,7 @@
 import json
 import os
 from pathlib import Path
-
-import pandas as pd
+from typing import Any
 
 from interfaces import ISubtitleEditorController, ISubtitleGenerator
 from utils.logger import logger
@@ -17,11 +16,26 @@ class SubtitleEditorController(ISubtitleEditorController):
         
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
-    def _ensure_list(self, data):
-        """核心修复：将可能是 DataFrame 的数据安全转换为 list"""
-        if isinstance(data, pd.DataFrame):
+    def _ensure_list(self, data: Any) -> list:
+        """将可能是 pandas DataFrame、FakeDataFrame 或 list 的数据安全转换为嵌套列表。
+
+        Args:
+            data (Any): 输入数据，可能为 DataFrame、FakeDataFrame、列表或 None。
+
+        Returns:
+            list: 标准二维列表。
+        """
+        if data is None:
+            return []
+        if isinstance(data, list):
+            return data
+        if hasattr(data, "values") and hasattr(data.values, "tolist"):
             return data.values.tolist()
-        return data if data is not None else []
+        if hasattr(data, "to_numpy"):
+            return data.to_numpy().tolist()
+        if hasattr(data, "__iter__"):
+            return [list(row) if hasattr(row, "__iter__") and not isinstance(row, (str, bytes)) else row for row in data]
+        return []
 
     def load_subtitle_file(self, file_objs: list):
         if not file_objs:
