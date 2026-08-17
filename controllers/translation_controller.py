@@ -1,8 +1,19 @@
+"""字幕翻译与 AI 智能断句控制器模块。
+
+处理翻译与断句 UI 事件，调度大模型服务，并以异步非阻塞方式读写字幕文件。
+"""
+
 import asyncio
 import os
 from pathlib import Path
 from typing import Any
 
+from core.constants import (
+    DEFAULT_SEGMENTATION_CHUNK_SIZE,
+    DEFAULT_SEGMENTATION_CONCURRENCY,
+    DEFAULT_TRANSLATION_CHUNK_SIZE,
+    DEFAULT_TRANSLATION_CONCURRENCY,
+)
 from interfaces import (
     IConfigManager,
     ISubtitleGenerator,
@@ -52,10 +63,10 @@ class TranslationController(ITranslationController):
             translation_service (ITranslationService): 大模型翻译与断句服务实例。
             config_manager (IConfigManager): 配置管理器实例。
         """
-        self.subtitle_service = subtitle_service
-        self.translation_service = translation_service
-        self.config = config_manager
-        self.output_dir = (
+        self.subtitle_service: ISubtitleGenerator = subtitle_service
+        self.translation_service: ITranslationService = translation_service
+        self.config: IConfigManager = config_manager
+        self.output_dir: Path = (
             Path(__file__).resolve().parent.parent / "subtitles" / "translated"
         )
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -84,8 +95,8 @@ class TranslationController(ITranslationController):
         base_url: str,
         model_name: str,
         proxy: str | None = None,
-        concurrency: int = 5,
-        chunk_size: int = 30,
+        concurrency: int = DEFAULT_TRANSLATION_CONCURRENCY,
+        chunk_size: int = DEFAULT_TRANSLATION_CHUNK_SIZE,
     ) -> tuple[str, list[str] | None, str]:
         """处理翻译 UI 事件，异步调用大模型翻译并输出新字幕文件。
 
@@ -167,8 +178,8 @@ class TranslationController(ITranslationController):
         base_url: str,
         model_name: str,
         proxy: str | None = None,
-        concurrency: int = 3,
-        chunk_size: int = 50,
+        concurrency: int = DEFAULT_SEGMENTATION_CONCURRENCY,
+        chunk_size: int = DEFAULT_SEGMENTATION_CHUNK_SIZE,
     ) -> tuple[str, list[str] | None]:
         """处理 AI 断句 UI 事件，异步调用大模型进行智能断句并重排时间轴。
 
@@ -226,4 +237,3 @@ class TranslationController(ITranslationController):
             f"成功处理 {len(segmented_files)} 个文件",
             segmented_files if segmented_files else None,
         )
-

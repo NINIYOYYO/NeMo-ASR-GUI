@@ -1,3 +1,7 @@
+"""音视频转录与字幕生成控制模块。
+
+协调音频提取、NeMo ASR 分块转录、字幕格式生成及 ZIP 归档。
+"""
 
 import os
 import re
@@ -7,6 +11,7 @@ from collections.abc import Generator
 from pathlib import Path
 from typing import Any
 
+from core.constants import MS_PER_SECOND
 from interfaces import (
     CancellationToken,
     IASRService,
@@ -33,12 +38,12 @@ class TranscriptionController(ITranscriptionController):
             audio_service (IAudioService): 音频提取与处理服务实例。
             subtitle_generator (ISubtitleGenerator): 字幕生成服务实例。
         """
-        self.app_services = app_services
-        self.audio_service = audio_service
-        self.subtitle_generator = subtitle_generator
+        self.app_services: IASRService = app_services
+        self.audio_service: IAudioService = audio_service
+        self.subtitle_generator: ISubtitleGenerator = subtitle_generator
         self.cancellation_token: CancellationToken = CancellationToken()
 
-        self.subtitles_folder_path = (
+        self.subtitles_folder_path: Path = (
             Path(__file__).resolve().parent.parent / "subtitles"
         )
 
@@ -157,7 +162,7 @@ class TranscriptionController(ITranscriptionController):
                     )
                     return
 
-                chunk_length_ms = chunk_length_s * 1000
+                chunk_length_ms = chunk_length_s * MS_PER_SECOND
                 yield (
                     f"状态：正在转录音频 (分块大小: {chunk_length_s}秒)...",
                     None,
@@ -311,5 +316,3 @@ class TranscriptionController(ITranscriptionController):
             str: 清洗后的安全文件名。
         """
         return re.sub(r'[\\/*?:"<>|]', "_", filename)
-
-    
