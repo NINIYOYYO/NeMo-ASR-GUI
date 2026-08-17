@@ -23,7 +23,7 @@ class FakeASR:
     def load_model_from_local(self, p):
         return "本地模型加载成功。"
 
-    def transcribe_audio_in_chunks(self, path, ms, max_chars=0):
+    def transcribe_audio_in_chunks(self, path, ms, max_chars=0, cancellation_token=None):
         return [
             {
                 "start": 0.0,
