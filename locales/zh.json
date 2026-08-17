@@ -6,14 +6,14 @@
     "shutdown": "ASR 应用程序已关闭。"
   },
   "model": {
-    "settings_title": "⚙️ 模型设置",
+    "settings_title": "模型设置",
     "cloud_section_title": "### 云端模型选择",
     "local_section_title": "### 本地模型加载",
     "cloud_model_label": "选择云端模型",
     "cloud_model_info": "不同模型对不同语言和场景的支持不同",
     "model_description_label": "模型说明",
-    "load_cloud_button": "🌐 加载选定的云端模型",
-    "load_local_button": "📁 加载本地模型",
+    "load_cloud_button": "加载选定的云端模型",
+    "load_local_button": "加载本地模型",
     "local_path_label": "本地模型路径 (.nemo 文件)",
     "local_path_placeholder": "例如: /path/to/your_model.nemo",
     "status_label": "模型加载状态",
@@ -31,11 +31,11 @@
     "loading_local": "检测到上次使用本地模型 '{path}'，正在尝试重新加载..."
   },
   "transcription": {
-    "tab_title": "📝 从视频/音频生成字幕",
+    "tab_title": "从视频/音频生成字幕",
     "upload_label": "上传视频文件 (例如 MP4, MKV),或者上传音频文件 (例如 MP3, WAV, M4A)，支持音频视频混合上传",
-    "submit_button": "▶️ 开始从视频/音频生成 ",
+    "submit_button": "开始从视频/音频生成 ",
     "status_label": "处理状态",
-    "result_title": "📄 字幕结果",
+    "result_title": "字幕结果",
     "download_label": "下载  文件 (.)",
     "preview_label": " 内容预览",
     "error_no_model": "错误：ASR 模型未加载。请先加载模型。",
@@ -80,11 +80,11 @@
     "error_save_failed": "错误：保存配置文件 '{path}' 失败: {error}"
   },
   "ui": {
-    "tips_title": "### 💡 使用提示",
+    "tips_title": "### 使用提示",
     "tips_content": "- 本地  文件保存在脚本目录下的 `subtitles` 文件夹中\n- 处理速度取决于您的硬件 (GPU/CPU) 和文件大小",
-    "warning_cpu": "⚠️ **警告：当前正在使用CPU运行，速度会非常慢。建议使用CUDA GPU以获得更好性能。**",
-    "info_gpu_available": "ℹ️ **提示：检测到CUDA GPU。选择模型后将尝试在GPU上运行。**",
-    "warning_no_gpu": "⚠️ **警告：未检测到CUDA GPU。选择模型后将在CPU上运行，速度可能较慢。**"
+    "warning_cpu": "**警告：当前正在使用CPU运行，速度会非常慢。建议使用CUDA GPU以获得更好性能。**",
+    "info_gpu_available": "**提示：检测到CUDA GPU。选择模型后将尝试在GPU上运行。**",
+    "warning_no_gpu": "**警告：未检测到CUDA GPU。选择模型后将在CPU上运行，速度可能较慢。**"
   },
   "logger": {
     "shutdown": "应用程序正在关闭，停止日志系统...",
@@ -108,7 +108,6 @@
     "max_width_label": "单行最大字符数 (Max Characters)",
     "max_width_info": "超过此长度将强制换行。仅对普通字幕生效，不影响 Char/Word 级输出。",
     "tab_segmentation": "断句规则"
-    
   },
   "diarization": {
     "tab_title": "说话人分离",
@@ -122,9 +121,9 @@
     "correction_table_label": "校对本",
     "table_header_error": "错误词",
     "table_header_correct": "正确词",
-    "batch_replace_btn": "🚀 执行批量替换",
-    "save_correction_btn": "💾 保存校对本",
-    "tips": "💡 *提示：点击表格下方 '+' 号可增行，选中内容按 Delete 键可删除。修改后会自动保存。*",
+    "batch_replace_btn": "执行批量替换",
+    "save_correction_btn": "保存校对本",
+    "tips": "*提示：点击表格下方 '+' 号可增行，选中内容按 Delete 键可删除。修改后会自动保存。*",
     "data_label": "字幕数据",
     "col_id": "序号",
     "col_start": "开始时间",
@@ -161,7 +160,7 @@
   },
   "segmentation": {
     "tab_title": "AI 断句",
-    "description": "💡 **功能说明**：将原本零碎的‘逐词/逐字’字幕（如 Char-level SRT）发送给大模型，重新智能组合成易于阅读的长句。",
+    "description": "**功能说明**：将原本零碎的‘逐词/逐字’字幕（如 Char-level SRT）发送给大模型，重新智能组合成易于阅读的长句。",
     "upload_label": "上传待处理字幕",
     "start_button": "开始 AI 智能断句",
     "chunk_size_label": "每组行数",
@@ -169,5 +168,4 @@
     "status_label": "状态",
     "download_label": "下载处理后的字幕"
   }
-
 }

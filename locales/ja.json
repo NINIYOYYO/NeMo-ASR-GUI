@@ -1,113 +1,113 @@
 {
-    "app": {
-      "title": "ビデオ/オーディオから字幕を自動生成 (NeMo ASR)",
-      "description": "ビデオまたはオーディオファイルをアップロードして、字幕を自動生成します。複数のNVIDIA NeMo ASRモデルに対応しています。",
-      "startup": "ASRアプリケーションを起動しています...",
-      "shutdown": "ASRアプリケーションはシャットダウンしました。"
-    },
-    "model": {
-      "settings_title": "⚙️ モデル設定",
-      "cloud_section_title": "### クラウドモデルの選択",
-      "local_section_title": "### ローカルモデルの読み込み",
-      "cloud_model_label": "クラウドモデルを選択",
-      "cloud_model_info": "モデルによって対応する言語やシーンが異なります",
-      "model_description_label": "モデル説明",
-      "load_cloud_button": "🌐 選択したクラウドモデルを読み込む",
-      "load_local_button": "📁 ローカルモデルを読み込む",
-      "local_path_label": "ローカルモデルのパス (.nemo ファイル)",
-      "local_path_placeholder": "例: /path/to/your_model.nemo",
-      "status_label": "モデルの読み込み状態",
-      "not_loaded": "モデルが読み込まれていません。モデルを選択して読み込んでください。",
-      "chunk_length_label": "オーディオチャンクの長さ (秒)",
-      "chunk_length_info": "60～180秒を推奨します。変更後、次にいずれかの「モデルを読み込む」ボタンをクリックすると、この設定がモデル選択と共に保存されます。",
-      "load_success_cloud": "クラウドモデル '{model_name}' の読み込みに成功しました。",
-      "load_success_local": "ローカルモデル '{model_name}' の読み込みに成功しました。",
-      "load_fail_cloud": "NGCからクラウドモデル '{model_name}' の読み込みに失敗しました: {error}",
-      "load_fail_local": "ローカルパスからのモデル読み込みに失敗しました: {error}",
-      "error_invalid_path": "エラー：指定されたローカルモデルのパスは無効です: {path}",
-      "error_empty_path": "エラー：有効なローカルモデルのパスを入力してから「ローカルモデルを読み込む」をクリックしてください。クラウドモデルを読み込む場合は、対応するボタンを使用してください。",
-      "error_path_not_found": "エラー：設定ファイル内のパス '{path}' が見つかりません。",
-      "loading_cloud": "前回使用したクラウドモデル '{model_name}' を検出しました。再読み込みを試みています...",
-      "loading_local": "前回使用したローカルモデル '{path}' を検出しました。再読み込みを試みています..."
-    },
-    "transcription": {
-      "tab_title": "📝 ビデオ/オーディオから字幕を生成",
-      "upload_label": "ビデオファイル (例: MP4, MKV) またはオーディオファイル (例: MP3, WAV, M4A) をアップロードします。ビデオとオーディオの混合アップロードに対応しています。",
-      "submit_button": "▶️ ビデオ/オーディオから生成を開始",
-      "status_label": "処理ステータス",
-      "result_title": "📄 字幕の結果",
-      "download_label": "ファイルをダウンロード",
-      "preview_label": "内容のプレビュー",
-      "error_no_model": "エラー：ASRモデルが読み込まれていません。まずモデルを読み込んでください。",
-      "error_no_file": "少なくとも1つのビデオファイルをアップロードしてください。",
-      "status_processing": "ステータス：ファイルを処理中, 現在：{current}/{total}, ファイル名：{filename} ...",
-      "status_extracting": "ステータス：{filename} の音声を抽出中...",
-      "status_transcribing": "ステータス：音声を文字起こし中 (チャンクサイズ: {chunk_length}秒)...",
-      "status_generating": "ステータス：コンテンツを生成中...",
-      "status_complete": "処理が完了しました。合計所要時間: {time:.2f}秒。{count}個のファイルを生成しました。",
-      "error_extraction_failed": "エラー：音声の抽出に失敗しました。ビデオファイルまたはffmpegのインストールを確認してください。",
-      "warning_no_timestamps": "警告：文字起こしファイル {filename} は有効なタイムスタンプを生成しませんでした。このファイルをスキップします。",
-      "error_processing": "エラー：ファイル {filename} の処理中に不明なエラーが発生しました: {error}。このファイルをスキップします。",
-      "log_start_processing": "ビデオ/オーディオファイルの処理を開始, 現在: {current}/{total}, ファイル名: {filename}",
-      "log_saved": "ファイルは次の場所にあります: {path}",
-      "log_audio_extracted": "音声の抽出に成功しました: {path}",
-      "log_temp_cleanup_failed": "一時音声ファイル {path} を削除できませんでした: {error}",
-      "format_label": "出力フォーマットを選択 (複数選択可)",
-      "zip_button": "すべてZIPでダウンロード"
-    },
-    "audio": {
-      "error_ffmpeg_not_found": "エラー：ffmpegが検出されないか、正しくインストールされていません。ffmpegをインストールし、システムのPATHに含まれていることを確認してください。",
-      "error_ffmpeg_failed": "FFmpegによる音声抽出に失敗しました: {error}",
-      "error_ffmpeg_empty": "FFmpegで抽出された音声ファイルは空です。",
-      "error_file_invalid": "エラー: オーディオファイルのパス '{path}' が無効か、ファイルが存在しません。",
-      "error_load_failed": "オーディオファイル '{path}' の読み込みまたは処理中にエラーが発生しました (pydub): {error}",
-      "log_audio_duration": "オーディオの総時間: {duration:.2f}秒",
-      "log_processing_chunk": "オーディオチャンクを処理中: {start:.2f}s - {end:.2f}s",
-      "warning_no_segments": "警告: オーディオチャンクはセグメントのタイムスタンプを生成できませんでした。完全な文字起こし: '{text}'.",
-      "error_transcribe_chunk": "オーディオチャンク '{path}' の文字起こし中にエラーが発生しました: {error}",
-      "error_cleanup": "一時音声ファイル '{path}' の削除中にOSエラーが発生しました: {error}"
-    },
-    "asr": {
-      "log_init": "ASRserviceが初期化されました。使用デバイス: {device}",
-      "error_not_loaded": "エラー: ASRモデルが読み込まれていないため、文字起こしできません。",
-      "log_loading_audio": "チャンク処理のためにオーディオファイル '{path}' を読み込んでいます..."
-    },
-    "config": {
-      "log_init": "設定マネージャーが初期化されました。設定ファイルパス: {path}",
-      "error_invalid_format": "エラー: 設定ファイル {path} のフォーマットが不正です: {error}。デフォルト設定を使用します。",
-      "log_not_found": "設定ファイル {path} が見つかりません。デフォルト設定を使用します (初回実行時)。",
-      "log_saved": "設定を {path} に保存しました",
-      "error_save_failed": "エラー：設定ファイル '{path}' の保存に失敗しました: {error}"
-    },
-    "ui": {
-      "tips_title": "### 💡 ヒントとコツ",
-      "tips_content": "- ローカルのファイルは、スクリプトディレクトリ内の `subtitles` フォルダに保存されます\n- 処理速度は、お使いのハードウェア（GPU/CPU）とファイルのサイズによって異なります",
-      "warning_cpu": "⚠️ **警告：現在CPUで実行中のため、処理速度が非常に遅くなります。パフォーマンス向上のためにCUDA GPUの使用を推奨します。**",
-      "info_gpu_available": "ℹ️ **ヒント：CUDA GPUが検出されました。モデルを選択すると、GPUでの実行が試みられます。**",
-      "warning_no_gpu": "⚠️ **警告：CUDA GPUが検出されませんでした。モデルを選択すると、CPUで実行されるため、処理が遅くなる可能性があります。**"
-    },
-    "logger": {
-      "shutdown": "アプリケーションをシャットダウン中、ロギングシステムを停止しています...",
-      "shutdown_success": "ロギングシステムは正常に停止しました。",
-      "init_success": "ロギングシステムは初期化されました。",
-      "filter_load_warning": "ログフィルタ設定の読み込みに失敗しました: {error}",
-      "filter_apply_warning": "サードパーティのログフィルタ設定の適用に失敗しました: {error}"
-    },
-    "translator": {
-      "file_not_found": "翻訳ファイルが見つかりません",
-      "load_error": "翻訳ファイルの読み込み中にエラーが発生しました: {error}"
-    },
-    "output": {
-      "accordion_title": "出力設定",
-      "tab_format": "字幕フォーマット",
-      "tab_word_level": "単語/文字レベル出力",
-      "word_level_label": "単語/文字レベル出力形式",
-      "word_level_info": "各文字/単語のタイムスタンプ情報を含みます。精密な同期が必要なシーンに適しています。",
-      "tab_split": "字幕の長さ設定",
-      "enable_split_label": "1行の文字数制限を有効にする",
-      "max_width_label": "1行の最大文字数 (Max Characters)",
-      "max_width_info": "この長さを超えると強制的に改行されます。通常字幕にのみ適用され、Char/Wordレベル出力には影響しません。",
-      "tab_segmentation": "文節区切りルール"
+  "app": {
+    "title": "ビデオ/オーディオから字幕を自動生成 (NeMo ASR)",
+    "description": "ビデオまたはオーディオファイルをアップロードして、字幕を自動生成します。複数のNVIDIA NeMo ASRモデルに対応しています。",
+    "startup": "ASRアプリケーションを起動しています...",
+    "shutdown": "ASRアプリケーションはシャットダウンしました。"
+  },
+  "model": {
+    "settings_title": "モデル設定",
+    "cloud_section_title": "### クラウドモデルの選択",
+    "local_section_title": "### ローカルモデルの読み込み",
+    "cloud_model_label": "クラウドモデルを選択",
+    "cloud_model_info": "モデルによって対応する言語やシーンが異なります",
+    "model_description_label": "モデル説明",
+    "load_cloud_button": "選択したクラウドモデルを読み込む",
+    "load_local_button": "ローカルモデルを読み込む",
+    "local_path_label": "ローカルモデルのパス (.nemo ファイル)",
+    "local_path_placeholder": "例: /path/to/your_model.nemo",
+    "status_label": "モデルの読み込み状態",
+    "not_loaded": "モデルが読み込まれていません。モデルを選択して読み込んでください。",
+    "chunk_length_label": "オーディオチャンクの長さ (秒)",
+    "chunk_length_info": "60～180秒を推奨します。変更後、次にいずれかの「モデルを読み込む」ボタンをクリックすると、この設定がモデル選択と共に保存されます。",
+    "load_success_cloud": "クラウドモデル '{model_name}' の読み込みに成功しました。",
+    "load_success_local": "ローカルモデル '{model_name}' の読み込みに成功しました。",
+    "load_fail_cloud": "NGCからクラウドモデル '{model_name}' の読み込みに失敗しました: {error}",
+    "load_fail_local": "ローカルパスからのモデル読み込みに失敗しました: {error}",
+    "error_invalid_path": "エラー：指定されたローカルモデルのパスは無効です: {path}",
+    "error_empty_path": "エラー：有効なローカルモデルのパスを入力してから「ローカルモデルを読み込む」をクリックしてください。クラウドモデルを読み込む場合は、対応するボタンを使用してください。",
+    "error_path_not_found": "エラー：設定ファイル内のパス '{path}' が見つかりません。",
+    "loading_cloud": "前回使用したクラウドモデル '{model_name}' を検出しました。再読み込みを試みています...",
+    "loading_local": "前回使用したローカルモデル '{path}' を検出しました。再読み込みを試みています..."
+  },
+  "transcription": {
+    "tab_title": "ビデオ/オーディオから字幕を生成",
+    "upload_label": "ビデオファイル (例: MP4, MKV) またはオーディオファイル (例: MP3, WAV, M4A) をアップロードします。ビデオとオーディオの混合アップロードに対応しています。",
+    "submit_button": "ビデオ/オーディオから生成を開始",
+    "status_label": "処理ステータス",
+    "result_title": "字幕の結果",
+    "download_label": "ファイルをダウンロード",
+    "preview_label": "内容のプレビュー",
+    "error_no_model": "エラー：ASRモデルが読み込まれていません。まずモデルを読み込んでください。",
+    "error_no_file": "少なくとも1つのビデオファイルをアップロードしてください。",
+    "status_processing": "ステータス：ファイルを処理中, 現在：{current}/{total}, ファイル名：{filename} ...",
+    "status_extracting": "ステータス：{filename} の音声を抽出中...",
+    "status_transcribing": "ステータス：音声を文字起こし中 (チャンクサイズ: {chunk_length}秒)...",
+    "status_generating": "ステータス：コンテンツを生成中...",
+    "status_complete": "処理が完了しました。合計所要時間: {time:.2f}秒。{count}個のファイルを生成しました。",
+    "error_extraction_failed": "エラー：音声の抽出に失敗しました。ビデオファイルまたはffmpegのインストールを確認してください。",
+    "warning_no_timestamps": "警告：文字起こしファイル {filename} は有効なタイムスタンプを生成しませんでした。このファイルをスキップします。",
+    "error_processing": "エラー：ファイル {filename} の処理中に不明なエラーが発生しました: {error}。このファイルをスキップします。",
+    "log_start_processing": "ビデオ/オーディオファイルの処理を開始, 現在: {current}/{total}, ファイル名: {filename}",
+    "log_saved": "ファイルは次の場所にあります: {path}",
+    "log_audio_extracted": "音声の抽出に成功しました: {path}",
+    "log_temp_cleanup_failed": "一時音声ファイル {path} を削除できませんでした: {error}",
+    "format_label": "出力フォーマットを選択 (複数選択可)",
+    "zip_button": "すべてZIPでダウンロード"
+  },
+  "audio": {
+    "error_ffmpeg_not_found": "エラー：ffmpegが検出されないか、正しくインストールされていません。ffmpegをインストールし、システムのPATHに含まれていることを確認してください。",
+    "error_ffmpeg_failed": "FFmpegによる音声抽出に失敗しました: {error}",
+    "error_ffmpeg_empty": "FFmpegで抽出された音声ファイルは空です。",
+    "error_file_invalid": "エラー: オーディオファイルのパス '{path}' が無効か、ファイルが存在しません。",
+    "error_load_failed": "オーディオファイル '{path}' の読み込みまたは処理中にエラーが発生しました (pydub): {error}",
+    "log_audio_duration": "オーディオの総時間: {duration:.2f}秒",
+    "log_processing_chunk": "オーディオチャンクを処理中: {start:.2f}s - {end:.2f}s",
+    "warning_no_segments": "警告: オーディオチャンクはセグメントのタイムスタンプを生成できませんでした。完全な文字起こし: '{text}'.",
+    "error_transcribe_chunk": "オーディオチャンク '{path}' の文字起こし中にエラーが発生しました: {error}",
+    "error_cleanup": "一時音声ファイル '{path}' の削除中にOSエラーが発生しました: {error}"
+  },
+  "asr": {
+    "log_init": "ASRserviceが初期化されました。使用デバイス: {device}",
+    "error_not_loaded": "エラー: ASRモデルが読み込まれていないため、文字起こしできません。",
+    "log_loading_audio": "チャンク処理のためにオーディオファイル '{path}' を読み込んでいます..."
+  },
+  "config": {
+    "log_init": "設定マネージャーが初期化されました。設定ファイルパス: {path}",
+    "error_invalid_format": "エラー: 設定ファイル {path} のフォーマットが不正です: {error}。デフォルト設定を使用します。",
+    "log_not_found": "設定ファイル {path} が見つかりません。デフォルト設定を使用します (初回実行時)。",
+    "log_saved": "設定を {path} に保存しました",
+    "error_save_failed": "エラー：設定ファイル '{path}' の保存に失敗しました: {error}"
+  },
+  "ui": {
+    "tips_title": "### ヒントとコツ",
+    "tips_content": "- ローカルのファイルは、スクリプトディレクトリ内の `subtitles` フォルダに保存されます\n- 処理速度は、お使いのハードウェア（GPU/CPU）とファイルのサイズによって異なります",
+    "warning_cpu": "**警告：現在CPUで実行中のため、処理速度が非常に遅くなります。パフォーマンス向上のためにCUDA GPUの使用を推奨します。**",
+    "info_gpu_available": "**ヒント：CUDA GPUが検出されました。モデルを選択すると、GPUでの実行が試みられます。**",
+    "warning_no_gpu": "**警告：CUDA GPUが検出されませんでした。モデルを選択すると、CPUで実行されるため、処理が遅くなる可能性があります。**"
+  },
+  "logger": {
+    "shutdown": "アプリケーションをシャットダウン中、ロギングシステムを停止しています...",
+    "shutdown_success": "ロギングシステムは正常に停止しました。",
+    "init_success": "ロギングシステムは初期化されました。",
+    "filter_load_warning": "ログフィルタ設定の読み込みに失敗しました: {error}",
+    "filter_apply_warning": "サードパーティのログフィルタ設定の適用に失敗しました: {error}"
+  },
+  "translator": {
+    "file_not_found": "翻訳ファイルが見つかりません",
+    "load_error": "翻訳ファイルの読み込み中にエラーが発生しました: {error}"
+  },
+  "output": {
+    "accordion_title": "出力設定",
+    "tab_format": "字幕フォーマット",
+    "tab_word_level": "単語/文字レベル出力",
+    "word_level_label": "単語/文字レベル出力形式",
+    "word_level_info": "各文字/単語のタイムスタンプ情報を含みます。精密な同期が必要なシーンに適しています。",
+    "tab_split": "字幕の長さ設定",
+    "enable_split_label": "1行の文字数制限を有効にする",
+    "max_width_label": "1行の最大文字数 (Max Characters)",
+    "max_width_info": "この長さを超えると強制的に改行されます。通常字幕にのみ適用され、Char/Wordレベル出力には影響しません。",
+    "tab_segmentation": "文節区切りルール"
   },
   "diarization": {
     "tab_title": "話者分離",
@@ -121,9 +121,9 @@
     "correction_table_label": "修正辞書",
     "table_header_error": "誤",
     "table_header_correct": "正",
-    "batch_replace_btn": "🚀 一括置換を実行",
-    "save_correction_btn": "💾 修正辞書を保存",
-    "tips": "💡 *ヒント：表の下の「+」をクリックして行を追加、Deleteキーで削除できます。変更は自動的に保存されます。*",
+    "batch_replace_btn": "一括置換を実行",
+    "save_correction_btn": "修正辞書を保存",
+    "tips": "*ヒント：表の下の「+」をクリックして行を追加、Deleteキーで削除できます。変更は自動的に保存されます。*",
     "data_label": "字幕データ",
     "col_id": "ID",
     "col_start": "開始時間",
@@ -160,7 +160,7 @@
   },
   "segmentation": {
     "tab_title": "AI セグメンテーション",
-    "description": "💡 **機能説明**：バラバラになった「単語/文字単位」の字幕（Char-level SRTなど）をLLMに送信し、読みやすい長文に再構成します。",
+    "description": "**機能説明**：バラバラになった「単語/文字単位」の字幕（Char-level SRTなど）をLLMに送信し、読みやすい長文に再構成します。",
     "upload_label": "処理待ち字幕のアップロード",
     "start_button": "AI スマート断句を開始",
     "chunk_size_label": "1グループあたりの行数",
@@ -168,4 +168,4 @@
     "status_label": "ステータス",
     "download_label": "処理後の字幕をダウンロード"
   }
-  }
+}

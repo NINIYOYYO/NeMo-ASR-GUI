@@ -6,14 +6,14 @@
     "shutdown": "ASR Application Closed."
   },
   "model": {
-    "settings_title": "⚙️ Model Settings",
+    "settings_title": "Model Settings",
     "cloud_section_title": "### Cloud Model Selection",
     "local_section_title": "### Local Model Loading",
     "cloud_model_label": "Select Cloud Model",
     "cloud_model_info": "Different models support different languages and scenarios",
     "model_description_label": "Model Description",
-    "load_cloud_button": "🌐 Load Selected Cloud Model",
-    "load_local_button": "📁 Load Local Model",
+    "load_cloud_button": "Load Selected Cloud Model",
+    "load_local_button": "Load Local Model",
     "local_path_label": "Local Model Path (.nemo file)",
     "local_path_placeholder": "e.g., /path/to/your_model.nemo",
     "status_label": "Model Loading Status",
@@ -31,11 +31,11 @@
     "loading_local": "Detected previously used local model '{path}', attempting to reload..."
   },
   "transcription": {
-    "tab_title": "📝 Generate Subtitles from Video/Audio",
+    "tab_title": "Generate Subtitles from Video/Audio",
     "upload_label": "Upload video files (e.g., MP4, MKV) or audio files (e.g., MP3, WAV, M4A), supports mixed upload",
-    "submit_button": "▶️ Start Generating  from Video/Audio",
+    "submit_button": "Start Generating  from Video/Audio",
     "status_label": "Processing Status",
-    "result_title": "📄  Subtitle Results",
+    "result_title": "Subtitle Results",
     "download_label": "Download  File (.)",
     "preview_label": " Content Preview",
     "error_no_model": "Error: ASR model not loaded. Please load a model first.",
@@ -80,11 +80,11 @@
     "error_save_failed": "Error: Failed to save configuration file '{path}': {error}"
   },
   "ui": {
-    "tips_title": "### 💡 Usage Tips",
+    "tips_title": "### Usage Tips",
     "tips_content": "- Local  files are saved in the `subtitles` folder in the script directory\n- Processing speed depends on your hardware (GPU/CPU) and file size",
-    "warning_cpu": "⚠️ **Warning: Currently running on CPU, which will be very slow. It is recommended to use a CUDA GPU for better performance.**",
-    "info_gpu_available": "ℹ️ **Tip: CUDA GPU detected. Will attempt to run on GPU after selecting a model.**",
-    "warning_no_gpu": "⚠️ **Warning: CUDA GPU not detected. Will run on CPU after selecting a model, which may be slower.**"
+    "warning_cpu": "**Warning: Currently running on CPU, which will be very slow. It is recommended to use a CUDA GPU for better performance.**",
+    "info_gpu_available": "**Tip: CUDA GPU detected. Will attempt to run on GPU after selecting a model.**",
+    "warning_no_gpu": "**Warning: CUDA GPU not detected. Will run on CPU after selecting a model, which may be slower.**"
   },
   "logger": {
     "shutdown": "Application shutting down, stopping logging system...",
@@ -108,65 +108,64 @@
     "max_width_label": "Max Characters per Line",
     "max_width_info": "Forces a line break if exceeded. Applies to standard subtitles only; affects neither Char nor Word level output.",
     "tab_segmentation": "Segmentation Rules"
-},
-"diarization": {
-  "tab_title": "Speaker Diarization",
-  "enable_label": "Enable Speaker Diarization",
-  "enable_info": "If enabled, the system will attempt to identify different speakers in the audio.",
-  "development_msg": "Speaker Diarization is currently under development. Stay tuned!"
-},
-"editing": {
-  "tab_title": "Subtitle Editing",
-  "upload_label": "Upload Subtitle File for Editing",
-  "correction_table_label": "Correction Dictionary",
-  "table_header_error": "Wrong Word",
-  "table_header_correct": "Correct Word",
-  "batch_replace_btn": "🚀 Batch Replace",
-  "save_correction_btn": "💾 Save Corrections",
-  "tips": "💡 *Tip: Click '+' below the table to add rows. Select content and press Delete to remove. Changes save automatically.*",
-  "data_label": "Subtitle Data",
-  "col_id": "ID",
-  "col_start": "Start Time",
-  "col_end": "End Time",
-  "col_text": "Text",
-  "save_subtitle_btn": "Save Subtitles",
-  "download_label": "Download Edited Subtitles",
-  "save_success_info": "Correction dictionary saved to local successfully!",
-  "development_msg": "Subtitle Editing is currently under development. Stay tuned!"
-},
-"llm": {
-  "api_accordion": "API Settings (OpenAI Compatible)",
-  "api_key_label": "API Key",
-  "base_url_label": "Base URL",
-  "model_name_label": "Model Name",
-  "proxy_label": "Network Proxy",
-  "proxy_placeholder": "e.g., http://127.0.0.1:7890",
-  "concurrency_label": "Concurrency",
-  "concurrency_info": "Number of parallel tasks. Higher is faster."
-},
-"translation": {
-  "tab_title": "LLM Translation",
-  "upload_label": "Upload Subtitle File for Translation",
-  "chunk_size_label": "Lines per Chunk",
-  "chunk_size_info": "Larger is cheaper & better context, but may cause misalignment or slower speed. Suggested: 30-50",
-  "options_accordion": "Translation Options",
-  "target_lang_label": "Target Language",
-  "bilingual_label": "Bilingual Output",
-  "start_button": "Start Translation",
-  "status_label": "Status",
-  "download_label": "Download Translated Subtitles",
-  "preview_label": "Translation Preview",
-  "development_msg": "LLM Translation is currently under development. Stay tuned!"
-},
-"segmentation": {
-  "tab_title": "AI Segmentation",
-  "description": "💡 **Function**: Re-groups fragmented 'word-level' subtitles (e.g., Char-level SRT) into readable long sentences using LLMs.",
-  "upload_label": "Upload Subtitles to Process",
-  "start_button": "Start AI Segmentation",
-  "chunk_size_label": "Lines per Chunk",
-  "chunk_info": "Larger is cheaper & better context, but might cause misalignment. Suggested 30-50. For char/word srt, set higher.",
-  "status_label": "Status",
-  "download_label": "Download Processed Subtitles"
-}
-
+  },
+  "diarization": {
+    "tab_title": "Speaker Diarization",
+    "enable_label": "Enable Speaker Diarization",
+    "enable_info": "If enabled, the system will attempt to identify different speakers in the audio.",
+    "development_msg": "Speaker Diarization is currently under development. Stay tuned!"
+  },
+  "editing": {
+    "tab_title": "Subtitle Editing",
+    "upload_label": "Upload Subtitle File for Editing",
+    "correction_table_label": "Correction Dictionary",
+    "table_header_error": "Wrong Word",
+    "table_header_correct": "Correct Word",
+    "batch_replace_btn": "Batch Replace",
+    "save_correction_btn": "Save Corrections",
+    "tips": "*Tip: Click '+' below the table to add rows. Select content and press Delete to remove. Changes save automatically.*",
+    "data_label": "Subtitle Data",
+    "col_id": "ID",
+    "col_start": "Start Time",
+    "col_end": "End Time",
+    "col_text": "Text",
+    "save_subtitle_btn": "Save Subtitles",
+    "download_label": "Download Edited Subtitles",
+    "save_success_info": "Correction dictionary saved to local successfully!",
+    "development_msg": "Subtitle Editing is currently under development. Stay tuned!"
+  },
+  "llm": {
+    "api_accordion": "API Settings (OpenAI Compatible)",
+    "api_key_label": "API Key",
+    "base_url_label": "Base URL",
+    "model_name_label": "Model Name",
+    "proxy_label": "Network Proxy",
+    "proxy_placeholder": "e.g., http://127.0.0.1:7890",
+    "concurrency_label": "Concurrency",
+    "concurrency_info": "Number of parallel tasks. Higher is faster."
+  },
+  "translation": {
+    "tab_title": "LLM Translation",
+    "upload_label": "Upload Subtitle File for Translation",
+    "chunk_size_label": "Lines per Chunk",
+    "chunk_size_info": "Larger is cheaper & better context, but may cause misalignment or slower speed. Suggested: 30-50",
+    "options_accordion": "Translation Options",
+    "target_lang_label": "Target Language",
+    "bilingual_label": "Bilingual Output",
+    "start_button": "Start Translation",
+    "status_label": "Status",
+    "download_label": "Download Translated Subtitles",
+    "preview_label": "Translation Preview",
+    "development_msg": "LLM Translation is currently under development. Stay tuned!"
+  },
+  "segmentation": {
+    "tab_title": "AI Segmentation",
+    "description": "**Function**: Re-groups fragmented 'word-level' subtitles (e.g., Char-level SRT) into readable long sentences using LLMs.",
+    "upload_label": "Upload Subtitles to Process",
+    "start_button": "Start AI Segmentation",
+    "chunk_size_label": "Lines per Chunk",
+    "chunk_info": "Larger is cheaper & better context, but might cause misalignment. Suggested 30-50. For char/word srt, set higher.",
+    "status_label": "Status",
+    "download_label": "Download Processed Subtitles"
+  }
 }
