@@ -79,21 +79,21 @@ class ASRService(IASRService):
             if self.model is not None:
                 logger.info("释放当前模型占用的显存和内存...")
                 try:
-                    # 1. 将模型移动到 CPU
-                    self.model.to("cpu")
-                    # 2. 删除模型引用
-                    del self.model
+                    if hasattr(self.model, "to"):
+                        try:
+                            self.model.to("cpu")
+                        except Exception:
+                            pass
+                finally:
                     self.model = None
-                    # 3. 强制执行垃圾回收
                     gc.collect()
-
-                    # 4. 清理 CUDA 缓存（如果使用 GPU）
                     if torch.cuda.is_available():
-                        torch.cuda.empty_cache()
-                        torch.cuda.ipc_collect()
-                    logger.info("旧模型显存释放完成。")
-                except Exception as e:
-                    logger.error(f"释放显存时出错: {e}")
+                        try:
+                            torch.cuda.empty_cache()
+                            torch.cuda.ipc_collect()
+                        except Exception:
+                            pass
+                logger.info("旧模型显存释放完成。")
 
     def _update_strategy(self, model_name: str) -> None:
         """根据模型名称决定使用哪个处理策略。
