@@ -17,6 +17,17 @@ if not LOG_DIR.exists():
 
 
 
+class SafeStreamHandler(logging.StreamHandler):
+    """防止在解释器退出阶段向已关闭的 stream 输出时产生未捕获异常。"""
+
+    def emit(self, record: logging.LogRecord) -> None:
+        try:
+            if self.stream and not getattr(self.stream, "closed", False):
+                super().emit(record)
+        except Exception:
+            self.handleError(record)
+
+
 def _create_default_filter():
     """创建默认过滤器（当没有配置文件时）。
     注意：必须定义在 _initialize_logging_system 调用它之前，
@@ -34,15 +45,24 @@ def _create_default_filter():
     return DefaultFilter()
 
 
-def stop_logging():
+def stop_logging() -> None:
     """停止日志监听器并清理资源。"""
     global _listener
     if _listener:
-        logging.info("应用程序正在关闭，停止日志系统...")
-        _listener.stop()
-        print("日志系统已成功停止。")
+        try:
+            logging.info("应用程序正在关闭，停止日志系统...")
+        except Exception:
+            pass
+        try:
+            _listener.stop()
+        except Exception:
+            pass
+        try:
+            if sys.stdout and not getattr(sys.stdout, "closed", False):
+                print("日志系统已成功停止。")
+        except Exception:
+            pass
         _listener = None
-
 
 
 def _initialize_logging_system():
@@ -57,7 +77,6 @@ def _initialize_logging_system():
     # 1. 创建一个队列，这是生产者和消费者之间的“邮箱”
     log_queue: queue.Queue = queue.Queue(-1)  # 无限大小的队列
 
-
     # 2. 创建一个处理器，将日志消息发送到队列
     # 这些 handlers 将由后台的 listener 线程使用，来执行慢速的 I/O 操作
     file_handler = logging.handlers.RotatingFileHandler(
@@ -70,7 +89,7 @@ def _initialize_logging_system():
     file_handler.setFormatter(file_formatter)
     file_handler.setLevel(logging.DEBUG)  # 文件处理器记录所有级别的日志
 
-    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler = SafeStreamHandler(sys.stdout)
     console_formatter = logging.Formatter(
         '%(asctime)s - %(filename)-18s:%(lineno)4d -  %(levelname)s - %(message)s', datefmt='%H:%M:%S'
     )
