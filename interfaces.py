@@ -1,6 +1,47 @@
+"""系统核心接口、抽象基类与强类型数据结构定义模块。
+
+定义应用内部服务、控制器、取消令牌以及标准字幕数据结构的契约。
+"""
+
 import threading
 from abc import ABC, abstractmethod
-from typing import Any
+from collections.abc import Generator
+from typing import Any, TypedDict
+
+
+class CharTimestampDict(TypedDict, total=False):
+    """字符级时间戳字典结构。"""
+
+    char: str
+    start: float
+    end: float
+
+
+class WordTimestampDict(TypedDict, total=False):
+    """词级时间戳字典结构。"""
+
+    word: str
+    start: float
+    end: float
+
+
+class SubtitleSegmentDict(TypedDict, total=False):
+    """标准字幕段落数据字典结构。"""
+
+    start: float
+    end: float
+    segment: str
+    text: str
+    index: int
+    chars: list[CharTimestampDict]
+    words: list[WordTimestampDict]
+
+
+class CorrectionEntry(TypedDict):
+    """校对本替换条目。"""
+
+    error: str
+    correct: str
 
 
 class CancellationToken:
@@ -46,23 +87,41 @@ class TaskCancelledError(Exception):
 class IASRService(ABC):
     """封装所有与 NeMo ASR 模型相关的操作。"""
 
-    # 推理设备 (torch.device)，UI 层用于显示 GPU/CPU 状态
+    # 推理设备 (torch.device | Any)，UI 层用于显示 GPU/CPU 状态
     device: Any
 
     @property
     @abstractmethod
     def is_model_loaded(self) -> bool:
-        """检查 ASR 模型是否已加载。"""
+        """检查 ASR 模型是否已加载。
+
+        Returns:
+            bool: 模型已加载返回 True，否则返回 False。
+        """
         ...
 
     @abstractmethod
     def load_model_from_ngc(self, model_name: str) -> str:
-        """从 NVIDIA NGC 加载预训练模型。"""
+        """从 NVIDIA NGC 加载预训练模型。
+
+        Args:
+            model_name (str): NGC 上的模型标识符。
+
+        Returns:
+            str: 操作状态描述文本。
+        """
         ...
 
     @abstractmethod
     def load_model_from_local(self, model_path: str) -> str:
-        """从本地 .nemo 文件加载模型。"""
+        """从本地 .nemo 文件加载模型。
+
+        Args:
+            model_path (str): 本地 .nemo 文件路径。
+
+        Returns:
+            str: 操作状态描述文本。
+        """
         ...
 
     @abstractmethod
@@ -72,7 +131,7 @@ class IASRService(ABC):
         chunk_length_ms: int,
         max_chars: int = 0,
         cancellation_token: CancellationToken | None = None,
-    ) -> list[dict[str, Any]]:
+    ) -> list[SubtitleSegmentDict]:
         """将音频文件分块转录并返回带有全局时间戳的段列表。
 
         Args:
@@ -82,194 +141,258 @@ class IASRService(ABC):
             cancellation_token (CancellationToken | None): 协作式取消令牌。
 
         Returns:
-            list[dict[str, Any]]: 包含 start, end, segment 等字段的段落列表。
+            list[SubtitleSegmentDict]: 包含 start, end, segment, chars, words 等字段的段落列表。
         """
         ...
-
 
 
 class IConfigManager(ABC):
-    """
-    定义配置管理器的接口，封装配置的加载、保存和访问功能。
-    """
+    """定义配置管理器的接口，封装配置的加载、保存和访问功能。"""
 
     @abstractmethod
-    def get_config_all(self) -> dict:
-        """
-        获取所有配置项。
-        返回包含所有配置项的字典。
+    def get_config_all(self) -> dict[str, Any]:
+        """获取所有配置项。
+
+        Returns:
+            dict[str, Any]: 包含所有配置键值的字典副本。
         """
         ...
 
     @abstractmethod
-    def save_config(self, **kwargs) -> None:
-        """
-        保存配置到 config.json 文件。
-        :param kwargs: 接受以下关键字参数:
-        - local_model_path (str): 本地模型路径
-        - chunk_length_s (int): 分块长度（秒）
-        - cloud_model_name (str): 云端模型名称
-        - language (str): 界面语言
+    def save_config(self, **kwargs: Any) -> None:
+        """保存配置到配置文件。
+
+        Args:
+            **kwargs: 键值对配置项。
         """
         ...
 
     @abstractmethod
-    def get_config_value(self, key: str):
-        """获取配置中的特定值。"""
+    def get_config_value(self, key: str) -> Any:
+        """获取配置中的特定值。
+
+        Args:
+            key (str): 配置项名称。
+
+        Returns:
+            Any: 配置项对应的值。
+        """
         ...
 
 
 class ISubtitleGenerator(ABC):
-    """
-    字幕生成服务接口。
-    支持多种格式转换逻辑
-    """
+    """字幕生成与解析服务接口。"""
 
     @abstractmethod
-    def generate_content(self, segment_timestamps: list, format_type: str) -> str:
-        """
-        根据时间戳列表生成指定格式的字幕内容。
-        ARGS:
-            segment_timestamps: 包含 {'start': float, 'end': float, 'segment': str} 的列表。
-            format_type: 格式类型 (e.g., 'srt', 'vtt', 'txt', 'json')
-        RETURNS:
-            SRT 格式的字符串。
+    def generate_content(
+        self, segment_timestamps: list[SubtitleSegmentDict] | list[dict[str, Any]], format_type: str
+    ) -> str:
+        """根据时间戳列表生成指定格式的字幕内容。
+
+        Args:
+            segment_timestamps (list[SubtitleSegmentDict] | list[dict[str, Any]]): 字幕段落列表。
+            format_type (str): 格式类型 (e.g., 'srt', 'vtt', 'txt', 'json', 'lrc', 'ass')。
+
+        Returns:
+            str: 格式化后的字幕文本。
         """
         ...
 
     @abstractmethod
-    def format_time(self, seconds: float, separator: str = ",") -> float | str:
-        """将秒格式化为 HH:MM:SS,mmm 字符串（公开 API，供编辑器等复用）"""
+    def format_time(self, seconds: float, separator: str = ",") -> str:
+        """将秒格式化为 HH:MM:SS,mmm 字符串（公开 API，供编辑器等复用）。
+
+        Args:
+            seconds (float): 时间秒数。
+            separator (str): 毫秒分隔符（默认为逗号 ','，VTT 可指定为 '.'）。
+
+        Returns:
+            str: 格式化后的时间戳字符串。
+        """
         ...
 
     @abstractmethod
     def srt_time_to_seconds(self, time_str: str) -> float:
-        """将 SRT 时间字符串 (00:00:00,000) 转换为秒（公开 API）"""
+        """将 SRT 时间字符串 (00:00:00,000) 转换为秒。
+
+        Args:
+            time_str (str): SRT 格式时间字符串。
+
+        Returns:
+            float: 对应的秒数。
+        """
         ...
 
     @abstractmethod
-    def parse_srt(self, srt_content: str) -> list:
-        """
-        解析 SRT 字幕内容为时间戳列表。
-        ARGS:
-            srt_content: SRT 格式的字幕内容字符串。
-        RETURNS:
-            包含 {'start': float, 'end': float, 'segment': str} 的列表。
+    def parse_srt(self, srt_content: str) -> list[SubtitleSegmentDict]:
+        """解析 SRT 字幕内容为时间戳列表。
+
+        Args:
+            srt_content (str): SRT 格式的字幕内容字符串。
+
+        Returns:
+            list[SubtitleSegmentDict]: 解析后的段落字典列表。
         """
         ...
 
 
 class IAudioService(ABC):
-    """
-    定义音频处理服务的接口，封装音频相关的核心服务。
-    """
+    """定义音频处理服务的接口，封装音频提取与预处理。"""
 
     @abstractmethod
     def extract_audio_from_video(self, input_media_path: str) -> str | None:
-        """
-        使用 ffmpeg 从视频文件中提取音频并转换为 WAV 格式。
-        返回提取的音频文件路径，或在失败时返回 None。
+        """使用 ffmpeg 从视频文件中提取音频并转换为 WAV 格式。
+
+        Args:
+            input_media_path (str): 待提取的媒体文件路径。
+
+        Returns:
+            str | None: 提取成功的音频路径，失败时返回 None。
         """
         ...
 
 
 class IModelController(ABC):
-    """
-    一个专门处理模型相关 UI 事件的控制器
-
-    """
+    """专门处理模型相关 UI 事件的控制器接口。"""
 
     @abstractmethod
     def handle_load_local_click(
-        self, path_from_input_box, chunk_val_from_slider, selected_cloud_model
-    ):
-        """处理“加载本地模型”按钮点击事件。"""
+        self, path_from_input_box: str, chunk_val_from_slider: int, selected_cloud_model: str
+    ) -> str:
+        """处理“加载本地模型”按钮点击事件。
+
+        Args:
+            path_from_input_box (str): 用户输入的本地模型路径。
+            chunk_val_from_slider (int): 切片长度滑块值（秒）。
+            selected_cloud_model (str): 当前选中的云端模型名称。
+
+        Returns:
+            str: 加载状态消息。
+        """
         ...
 
     @abstractmethod
-    def handle_load_cloud_click(self, chunk_val_from_slider, selected_cloud_model):
-        """处理“加载云端模型”按钮点击事件。"""
+    def handle_load_cloud_click(self, chunk_val_from_slider: int, selected_cloud_model: str) -> str:
+        """处理“加载云端模型”按钮点击事件。
+
+        Args:
+            chunk_val_from_slider (int): 切片长度滑块值（秒）。
+            selected_cloud_model (str): 当前选中的云端模型名称。
+
+        Returns:
+            str: 加载状态消息。
+        """
         ...
 
 
 class ITranscriptionController(ABC):
-    """
-    一个专门处理转录相关 UI 事件的控制器。
-    """
+    """专门处理转录相关 UI 事件的控制器接口。"""
 
     @abstractmethod
     def process_media(
         self,
-        media_file_objs: list,
+        media_file_objs: list[Any],
         chunk_length_s: int,
-        output_formats: list,
-        word_output_formats: list,
+        output_formats: list[str],
+        word_output_formats: list[str],
         enable_split: bool = False,
         max_chars: int = 0,
-    ):
-        """处理上传的视频/音频文件，生成字幕文件。
-        ARGS:
-            media_file_objs: Gradio 上传的视频/音频文件对象列表。
-            chunk_length_s: 音频分块长度（秒）。
-            output_formats: 输出字幕格式列表 (e.g., ['srt', 'vtt'])
-            word_output_formats: 逐词/逐字级额外输出格式列表 (e.g., ['word_srt'])
-            enable_split: 是否启用长字幕拆分。
-            max_chars: 拆分时每条字幕的最大字符数。
-        YIELDS:
-            状态消息 (str), 输出字幕文件路径列表 (list), 字幕内容预览 (str)。
+    ) -> Generator[tuple[str, list[str] | None, str], None, None]:
+        """处理上传的视频/音频文件，分块推理并生成字幕文件。
+
+        Args:
+            media_file_objs (list[Any]): 上传的视频/音频文件对象列表。
+            chunk_length_s (int): 音频分块长度（秒）。
+            output_formats (list[str]): 输出字幕格式列表 (e.g., ['srt', 'vtt'])。
+            word_output_formats (list[str]): 逐词/逐字级额外输出格式列表。
+            enable_split (bool): 是否启用长字幕拆分。
+            max_chars (int): 拆分时每条字幕的最大字符数。
+
+        Yields:
+            tuple[str, list[str] | None, str]: 状态消息, 输出字幕文件路径列表, 字幕内容预览。
         """
         ...
 
     @abstractmethod
-    def create_zip_archive(self, file_objs: list) -> str | None:
-        """
-        将列表中的文件打包成 ZIP 文件。
-        ARGS:
-            file_objs: Gradio 文件对象列表 (包含 .name 路径属性)
-        RETURNS:
-            生成的 ZIP 文件路径 (str)，失败时返回 None
+    def create_zip_archive(self, file_objs: list[Any]) -> str | None:
+        """将列表中的文件打包成 ZIP 文件。
+
+        Args:
+            file_objs (list[Any]): 文件对象列表。
+
+        Returns:
+            str | None: 生成的 ZIP 文件路径，失败时返回 None。
         """
         ...
 
 
 class ISubtitleEditorController(ABC):
-    @abstractmethod
-    def load_subtitle_file(self, file_objs: list):
-        """加载字幕文件并解析为表格数据"""
-        ...
+    """字幕编辑与校对控制器接口。"""
 
     @abstractmethod
-    def apply_batch_corrections(self, subtitle_data, correction_table):
-        """应用校对本中的批量替换逻辑"""
-        ...
+    def load_subtitle_file(self, file_objs: list[Any]) -> tuple[list[list[Any]] | None, str]:
+        """加载字幕文件并解析为表格数据。
 
-    @abstractmethod
-    def save_subtitles(self, subtitle_data, original_file_obj):
-        """将表格数据保存回字幕文件。
-        ARGS:
-            subtitle_data: 编辑表格数据 (DataFrame 或 list)。
-            original_file_obj: 原始上传文件对象（或对象列表），用于推导输出文件名。
-        RETURNS:
-            保存后的文件路径 (str)，失败时返回 None。
+        Args:
+            file_objs (list[Any]): 上传的文件对象列表。
+
+        Returns:
+            tuple[list[list[Any]] | None, str]: (表格数据列表, 状态提示文本)。
         """
         ...
 
     @abstractmethod
-    def load_corrections(self) -> list:
-        """从本地加载校对本数据"""
+    def apply_batch_corrections(self, subtitle_data: Any, correction_table: Any) -> list[list[Any]]:
+        """应用校对本中的批量替换逻辑。
+
+        Args:
+            subtitle_data (Any): 待替换的字幕表格数据。
+            correction_table (Any): 校对规则表格数据。
+
+        Returns:
+            list[list[Any]]: 批量替换后的字幕数据列表。
+        """
         ...
 
     @abstractmethod
-    def save_corrections(self, correction_table_data) -> None:
-        """保存校对本数据到本地"""
+    def save_subtitles(self, subtitle_data: Any, original_file_obj: Any) -> str | None:
+        """将表格数据保存回字幕文件。
+
+        Args:
+            subtitle_data (Any): 编辑表格数据 (DataFrame 或 list)。
+            original_file_obj (Any): 原始上传文件对象（或对象列表），用于推导输出文件名。
+
+        Returns:
+            str | None: 保存后的文件路径，失败时返回 None。
+        """
+        ...
+
+    @abstractmethod
+    def load_corrections(self) -> list[list[str]]:
+        """从本地加载校对本数据。
+
+        Returns:
+            list[list[str]]: 校对规则列表。
+        """
+        ...
+
+    @abstractmethod
+    def save_corrections(self, correction_table_data: Any) -> None:
+        """保存校对本数据到本地。
+
+        Args:
+            correction_table_data (Any): 校对本规则数据。
+        """
         ...
 
 
 class ITranslationService(ABC):
+    """大模型翻译与智能断句服务接口。"""
+
     @abstractmethod
     async def translate_segments(
         self,
-        segments: list,
+        segments: list[SubtitleSegmentDict] | list[dict[str, Any]],
         target_lang: str,
         api_key: str,
         base_url: str,
@@ -278,30 +401,60 @@ class ITranslationService(ABC):
         proxy: str | None = None,
         concurrency: int = 5,
         chunk_size: int = 30,
-    ) -> list:
-        """调用大模型翻译字幕段落"""
+    ) -> list[SubtitleSegmentDict]:
+        """调用大模型并发翻译字幕段落。
+
+        Args:
+            segments (list[SubtitleSegmentDict] | list[dict[str, Any]]): 原始字幕段落列表。
+            target_lang (str): 目标翻译语言。
+            api_key (str): API 密钥。
+            base_url (str): API 基础 URL。
+            model (str): 模型名称。
+            is_bilingual (bool): 是否保留双语字幕。
+            proxy (str | None): 代理地址。
+            concurrency (int): 并发数。
+            chunk_size (int): 批次大小。
+
+        Returns:
+            list[SubtitleSegmentDict]: 翻译后的字幕段落列表。
+        """
         ...
 
     @abstractmethod
     async def segment_subtitles(
         self,
-        segments: list,
+        segments: list[SubtitleSegmentDict] | list[dict[str, Any]],
         api_key: str,
         base_url: str,
         model: str,
         proxy: str | None = None,
         concurrency: int = 3,
         chunk_size: int = 50,
-    ) -> list:
-        """调用大模型进行智能断句"""
+    ) -> list[SubtitleSegmentDict]:
+        """调用大模型进行智能断句与时间戳重对齐。
+
+        Args:
+            segments (list[SubtitleSegmentDict] | list[dict[str, Any]]): 原始字幕段落列表。
+            api_key (str): API 密钥。
+            base_url (str): API 基础 URL。
+            model (str): 模型名称。
+            proxy (str | None): 代理地址。
+            concurrency (int): 并发数。
+            chunk_size (int): 批次大小。
+
+        Returns:
+            list[SubtitleSegmentDict]: 重构断句与对齐后的字幕段落列表。
+        """
         ...
 
 
 class ITranslationController(ABC):
+    """处理翻译与智能断句 UI 事件的控制器接口。"""
+
     @abstractmethod
     async def handle_translation(
         self,
-        file_objs: list,
+        file_objs: list[Any],
         target_lang: str,
         is_bilingual: bool,
         api_key: str,
@@ -310,80 +463,132 @@ class ITranslationController(ABC):
         proxy: str | None = None,
         concurrency: int = 5,
         chunk_size: int = 30,
-    ):
+    ) -> tuple[str, list[str] | None, str]:
         """处理翻译 UI 事件。
-        RETURNS:
-            (状态消息 str, 翻译后文件路径列表 list, 内容预览 str)
+
+        Args:
+            file_objs (list[Any]): 上传的文件列表。
+            target_lang (str): 目标语言。
+            is_bilingual (bool): 是否双语。
+            api_key (str): API 密钥。
+            base_url (str): API 基础 URL。
+            model_name (str): 模型标识。
+            proxy (str | None): 代理地址。
+            concurrency (int): 并发任务数。
+            chunk_size (int): 批次大小。
+
+        Returns:
+            tuple[str, list[str] | None, str]: 状态消息, 翻译后文件路径列表, 内容预览。
         """
         ...
 
     @abstractmethod
     async def handle_ai_segmentation(
         self,
-        file_objs: list,
+        file_objs: list[Any],
         api_key: str,
         base_url: str,
         model_name: str,
         proxy: str | None = None,
         concurrency: int = 3,
         chunk_size: int = 50,
-    ):
+    ) -> tuple[str, list[str] | None]:
         """处理 AI 断句 UI 事件。
-        RETURNS:
-            (状态消息 str, 断句后文件路径列表 list)
+
+        Args:
+            file_objs (list[Any]): 上传的文件列表。
+            api_key (str): API 密钥。
+            base_url (str): API 基础 URL。
+            model_name (str): 模型标识。
+            proxy (str | None): 代理地址。
+            concurrency (int): 并发任务数。
+            chunk_size (int): 批次大小。
+
+        Returns:
+            tuple[str, list[str] | None]: 状态消息, 断句后文件路径列表。
         """
         ...
 
 
 class IApplication(ABC):
-    """
-    定义应用程序的接口，封装核心服务和配置管理器。
-    """
+    """定义应用程序的接口，封装核心服务和配置管理器。"""
 
     @property
     @abstractmethod
     def asr_service(self) -> IASRService:
-        """获取 ASR 服务实例。"""
+        """获取 ASR 服务实例。
+
+        Returns:
+            IASRService: ASR 语音识别服务。
+        """
         ...
 
     @property
     @abstractmethod
     def config_manager(self) -> IConfigManager:
-        """获取配置管理器实例。"""
+        """获取配置管理器实例。
+
+        Returns:
+            IConfigManager: 配置管理器。
+        """
         ...
 
     @property
     @abstractmethod
     def audio_service(self) -> IAudioService:
-        """获取音频处理服务实例。"""
+        """获取音频处理服务实例。
+
+        Returns:
+            IAudioService: 音频处理服务。
+        """
         ...
 
     @property
     @abstractmethod
     def subtitle_generator(self) -> ISubtitleGenerator:
-        """获取字幕生成服务实例。"""
+        """获取字幕生成服务实例。
+
+        Returns:
+            ISubtitleGenerator: 字幕生成服务。
+        """
         ...
 
     @property
     @abstractmethod
     def model_controller(self) -> IModelController:
-        """获取模型控制器实例。"""
+        """获取模型控制器实例。
+
+        Returns:
+            IModelController: 模型控制器。
+        """
         ...
 
     @property
     @abstractmethod
     def transcription_controller(self) -> ITranscriptionController:
-        """获取转录控制器实例。"""
+        """获取转录控制器实例。
+
+        Returns:
+            ITranscriptionController: 转录控制器。
+        """
         ...
 
     @property
     @abstractmethod
     def subtitle_editor_controller(self) -> ISubtitleEditorController:
-        """获取字幕编辑控制器实例。"""
+        """获取字幕编辑控制器实例。
+
+        Returns:
+            ISubtitleEditorController: 字幕编辑控制器。
+        """
         ...
 
     @property
     @abstractmethod
     def translation_controller(self) -> ITranslationController:
-        """获取翻译控制器实例。"""
+        """获取翻译控制器实例。
+
+        Returns:
+            ITranslationController: 翻译控制器。
+        """
         ...
