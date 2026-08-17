@@ -4,6 +4,7 @@ import tempfile
 import threading
 from typing import Any
 
+import numpy as np
 import torch
 from pydub import AudioSegment
 
@@ -13,7 +14,7 @@ except Exception:
     nemo_asr = None  # type: ignore[assignment]
 
 from core.post_processors import DefaultSegmentStrategy, ITranscriptionStrategy, JapaneseCharStrategy
-from interfaces import IASRService
+from interfaces import CancellationToken, IASRService
 from utils.logger import logger
 
 
@@ -154,14 +155,19 @@ class ASRService(IASRService):
                 return f"从本地路径加载模型 '{actual_path}' 失败: {e}"
 
     def transcribe_audio_in_chunks(
-        self, audio_path: str, chunk_length_ms: int, max_chars: int = 0
+        self,
+        audio_path: str,
+        chunk_length_ms: int,
+        max_chars: int = 0,
+        cancellation_token: CancellationToken | None = None,
     ) -> list[dict[str, Any]]:
-        """将音频文件分块转录并返回带有全局时间戳的段列表（线程安全）。
+        """将音频文件分块转录并返回带有全局时间戳的段列表（线程安全与内存张量优化）。
 
         Args:
             audio_path (str): 待转录的音频文件路径 (WAV 格式)。
             chunk_length_ms (int): 每个音频块的切片长度（毫秒）。
             max_chars (int): 单句最大字符长度限制，0 表示不限制。
+            cancellation_token (CancellationToken | None): 协作式取消令牌。
 
         Returns:
             list[dict[str, Any]]: 包含 start, end, segment, chars, words 等字段的段落列表。
@@ -188,27 +194,61 @@ class ASRService(IASRService):
             all_results: list[dict[str, Any]] = []
 
             for i in range(0, audio_duration_ms, chunk_length_ms):
+                if cancellation_token and cancellation_token.is_cancelled:
+                    logger.info("转录任务已被协作式取消令牌中断，提前退出分块循环。")
+                    break
+
                 start_time_ms = i
                 end_time_ms = min(i + chunk_length_ms, audio_duration_ms)
                 chunk = audio[start_time_ms:end_time_ms]
 
+                logger.info(
+                    f"处理音频块: {start_time_ms / 1000:.2f}s - {end_time_ms / 1000:.2f}s"
+                )
+
+                chunk_output_list = None
                 temp_chunk_file_path = ""
                 try:
-                    with tempfile.NamedTemporaryFile(
-                        suffix=".wav", delete=False
-                    ) as temp_chunk_file:
-                        temp_chunk_file_path = temp_chunk_file.name
-                    chunk.export(temp_chunk_file_path, format="wav")
-                    logger.info(
-                        f"处理音频块: {start_time_ms / 1000:.2f}s - {end_time_ms / 1000:.2f}s"
-                    )
+                    # 1. 优先尝试内存张量直传推理（避免磁盘 I/O 抖动）
+                    try:
+                        raw_samples = (
+                            np.frombuffer(chunk.raw_data, dtype=np.int16).astype(
+                                np.float32
+                            )
+                            / 32768.0
+                        )
+                        chunk_tensor = torch.from_numpy(raw_samples)
+                        chunk_output_list = self.model.transcribe(
+                            audio=[chunk_tensor],
+                            batch_size=1,
+                            timestamps=True,
+                            return_hypotheses=True,
+                        )
+                    except (
+                        TypeError,
+                        AttributeError,
+                        NotImplementedError,
+                        Exception,
+                    ) as in_memory_err:
+                        logger.debug(
+                            f"内存张量直传推理未被底层模型支持 ({in_memory_err})，降级为临时磁盘 WAV 模式。"
+                        )
+                        chunk_output_list = None
 
-                    chunk_output_list = self.model.transcribe(
-                        [temp_chunk_file_path],
-                        batch_size=1,
-                        timestamps=True,
-                        return_hypotheses=True,
-                    )
+                    # 2. 降级方案：若内存直传不可用或异常，使用临时 WAV 文件
+                    if chunk_output_list is None:
+                        with tempfile.NamedTemporaryFile(
+                            suffix=".wav", delete=False
+                        ) as temp_chunk_file:
+                            temp_chunk_file_path = temp_chunk_file.name
+                        chunk.export(temp_chunk_file_path, format="wav")
+
+                        chunk_output_list = self.model.transcribe(
+                            [temp_chunk_file_path],
+                            batch_size=1,
+                            timestamps=True,
+                            return_hypotheses=True,
+                        )
 
                     chunk_global_start_offset_sec = start_time_ms / 1000.0
 
@@ -223,7 +263,7 @@ class ASRService(IASRService):
 
                 except Exception as e:
                     logger.error(
-                        f"转录音频块 '{temp_chunk_file_path}' 时发生错误: {e}",
+                        f"转录音频块 ({start_time_ms / 1000:.2f}s - {end_time_ms / 1000:.2f}s) 时发生错误: {e}",
                         exc_info=True,
                     )
                 finally:
@@ -237,4 +277,5 @@ class ASRService(IASRService):
 
             all_results.sort(key=lambda x: x["start"])
             return all_results
+
 
