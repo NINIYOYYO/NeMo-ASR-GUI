@@ -1,11 +1,50 @@
+import threading
 from abc import ABC, abstractmethod
 from typing import Any
 
 
+class CancellationToken:
+    """协作式取消令牌，用于在多线程与异步任务中安全、及时地响应取消请求。"""
+
+    def __init__(self) -> None:
+        """初始化取消令牌。"""
+        self._is_cancelled = threading.Event()
+
+    def cancel(self) -> None:
+        """触发取消操作。"""
+        self._is_cancelled.set()
+
+    def reset(self) -> None:
+        """重置取消状态。"""
+        self._is_cancelled.clear()
+
+    @property
+    def is_cancelled(self) -> bool:
+        """检查当前任务是否已被请求取消。
+
+        Returns:
+            bool: 如果已被取消则返回 True，否则返回 False。
+        """
+        return self._is_cancelled.is_set()
+
+    def check_cancelled(self) -> None:
+        """如果已取消则抛出 TaskCancelledError 异常。
+
+        Raises:
+            TaskCancelledError: 当任务被请求取消时抛出。
+        """
+        if self.is_cancelled:
+            raise TaskCancelledError("任务已被用户取消。")
+
+
+class TaskCancelledError(Exception):
+    """当任务被协作式取消令牌中断时抛出。"""
+
+    pass
+
+
 class IASRService(ABC):
-    """
-    封装所有与 NeMo ASR 模型相关的操作。
-    """
+    """封装所有与 NeMo ASR 模型相关的操作。"""
 
     # 推理设备 (torch.device)，UI 层用于显示 GPU/CPU 状态
     device: Any
@@ -28,19 +67,25 @@ class IASRService(ABC):
 
     @abstractmethod
     def transcribe_audio_in_chunks(
-        self, audio_path: str, chunk_length_ms: int, max_chars: int = 0
-    ) -> list:
-        """
-        将音频文件分块转录并返回带有全局时间戳的段列表。
-        ARGS:
-            audio_path: 音频文件路径 (假设为 WAV)。
-            chunk_length_ms: 每块的长度（毫秒）。
-            max_chars: 单句最大长度限制，0 表示不限制
-        RETURNS:
-            包含 {'start': float, 'end': float, 'segment': str} 的列表。
+        self,
+        audio_path: str,
+        chunk_length_ms: int,
+        max_chars: int = 0,
+        cancellation_token: CancellationToken | None = None,
+    ) -> list[dict[str, Any]]:
+        """将音频文件分块转录并返回带有全局时间戳的段列表。
 
+        Args:
+            audio_path (str): 音频文件路径 (WAV 格式)。
+            chunk_length_ms (int): 每块的长度（毫秒）。
+            max_chars (int): 单句最大长度限制，0 表示不限制。
+            cancellation_token (CancellationToken | None): 协作式取消令牌。
+
+        Returns:
+            list[dict[str, Any]]: 包含 start, end, segment 等字段的段落列表。
         """
         ...
+
 
 
 class IConfigManager(ABC):
