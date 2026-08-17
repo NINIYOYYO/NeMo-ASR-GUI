@@ -1,3 +1,8 @@
+"""可配置日志过滤器模块。
+
+提供基于 YAML 配置文件、正则表达式与日志等级阈值的消息级与模块级过滤。
+"""
+
 import logging
 import re
 from pathlib import Path
@@ -29,7 +34,7 @@ class ConfigurableFilter(logging.Filter):
         """
         try:
             with open(config_path, "r", encoding="utf-8") as f:
-                config = yaml.safe_load(f) or {}
+                config: dict[str, Any] = yaml.safe_load(f) or {}
 
             # 编译正则表达式模式并存储 min_level 规则
             filters = config.get("message_filters", [])
@@ -84,16 +89,17 @@ def apply_third_party_filters(config_path: str | None = None) -> None:
 
     try:
         with open(path, "r", encoding="utf-8") as f:
-            config = yaml.safe_load(f) or {}
+            config: dict[str, Any] = yaml.safe_load(f) or {}
 
         for logger_config in config.get("third_party_loggers", []):
             logger_name = logger_config.get("name", "")
             if logger_name:
-                level = getattr(logging, logger_config.get("level", "WARNING").upper(), logging.WARNING)
+                level = getattr(
+                    logging,
+                    str(logger_config.get("level", "WARNING")).upper(),
+                    logging.WARNING,
+                )
                 logging.getLogger(logger_name).setLevel(level)
 
     except Exception as e:
         logging.warning(f"无法应用第三方日志过滤配置: {e}")
-
-
-
