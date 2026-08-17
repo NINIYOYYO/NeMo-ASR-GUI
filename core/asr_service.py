@@ -1,3 +1,8 @@
+"""NeMo ASR 语音识别模型服务模块。
+
+封装 NeMo 模型加载、GPU/CPU 显存管理、多线程并发安全保护以及内存音频张量分块推理。
+"""
+
 import gc
 import os
 import tempfile
@@ -13,8 +18,18 @@ try:
 except Exception:
     nemo_asr = None  # type: ignore[assignment]
 
-from core.post_processors import DefaultSegmentStrategy, ITranscriptionStrategy, JapaneseCharStrategy
-from interfaces import CancellationToken, IASRService
+from core.constants import (
+    AUDIO_NORM_FACTOR,
+    DEFAULT_AUDIO_CHANNELS,
+    DEFAULT_SAMPLE_RATE,
+    MS_PER_SECOND,
+)
+from core.post_processors import (
+    DefaultSegmentStrategy,
+    ITranscriptionStrategy,
+    JapaneseCharStrategy,
+)
+from interfaces import CancellationToken, IASRService, SubtitleSegmentDict
 from utils.logger import logger
 
 
@@ -25,11 +40,11 @@ class ASRService(IASRService):
         """初始化 ASRService，分配硬件设备并创建可重入互斥锁。"""
         self._lock: threading.RLock = threading.RLock()
         self.model: Any = None
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device: torch.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         # 当前使用的处理策略，默认为普通策略
         self.processor_strategy: ITranscriptionStrategy = DefaultSegmentStrategy()
-        logger.info(f"ASRservice 初始化，使用设备: {self.device}")
+        logger.info(f"ASRService 初始化，使用设备: {self.device}")
 
     @property
     def is_model_loaded(self) -> bool:
@@ -160,7 +175,7 @@ class ASRService(IASRService):
         chunk_length_ms: int,
         max_chars: int = 0,
         cancellation_token: CancellationToken | None = None,
-    ) -> list[dict[str, Any]]:
+    ) -> list[SubtitleSegmentDict]:
         """将音频文件分块转录并返回带有全局时间戳的段列表（线程安全与内存张量优化）。
 
         Args:
@@ -170,7 +185,7 @@ class ASRService(IASRService):
             cancellation_token (CancellationToken | None): 协作式取消令牌。
 
         Returns:
-            list[dict[str, Any]]: 包含 start, end, segment, chars, words 等字段的段落列表。
+            list[SubtitleSegmentDict]: 包含 start, end, segment, chars, words 等字段的段落列表。
         """
         with self._lock:
             if not self.is_model_loaded:
@@ -184,14 +199,16 @@ class ASRService(IASRService):
             logger.info(f"正在加载音频文件 '{audio_path}' 进行分块处理...")
             try:
                 audio = AudioSegment.from_wav(audio_path)
-                audio = audio.set_frame_rate(16000).set_channels(1)
+                audio = audio.set_frame_rate(DEFAULT_SAMPLE_RATE).set_channels(
+                    DEFAULT_AUDIO_CHANNELS
+                )
             except Exception as e:
                 logger.error(f"加载或处理音频文件 '{audio_path}' 时发生错误 (pydub): {e}")
                 return []
 
             audio_duration_ms = len(audio)
-            logger.info(f"音频总时长: {audio_duration_ms / 1000:.2f} 秒")
-            all_results: list[dict[str, Any]] = []
+            logger.info(f"音频总时长: {audio_duration_ms / MS_PER_SECOND:.2f} 秒")
+            all_results: list[SubtitleSegmentDict] = []
 
             for i in range(0, audio_duration_ms, chunk_length_ms):
                 if cancellation_token and cancellation_token.is_cancelled:
@@ -203,7 +220,7 @@ class ASRService(IASRService):
                 chunk = audio[start_time_ms:end_time_ms]
 
                 logger.info(
-                    f"处理音频块: {start_time_ms / 1000:.2f}s - {end_time_ms / 1000:.2f}s"
+                    f"处理音频块: {start_time_ms / MS_PER_SECOND:.2f}s - {end_time_ms / MS_PER_SECOND:.2f}s"
                 )
 
                 chunk_output_list = None
@@ -215,7 +232,7 @@ class ASRService(IASRService):
                             np.frombuffer(chunk.raw_data, dtype=np.int16).astype(
                                 np.float32
                             )
-                            / 32768.0
+                            / AUDIO_NORM_FACTOR
                         )
                         chunk_tensor = torch.from_numpy(raw_samples)
                         chunk_output_list = self.model.transcribe(
@@ -250,7 +267,7 @@ class ASRService(IASRService):
                             return_hypotheses=True,
                         )
 
-                    chunk_global_start_offset_sec = start_time_ms / 1000.0
+                    chunk_global_start_offset_sec = start_time_ms / float(MS_PER_SECOND)
 
                     new_segments = self.processor_strategy.process(
                         chunk_output_list,
@@ -263,7 +280,7 @@ class ASRService(IASRService):
 
                 except Exception as e:
                     logger.error(
-                        f"转录音频块 ({start_time_ms / 1000:.2f}s - {end_time_ms / 1000:.2f}s) 时发生错误: {e}",
+                        f"转录音频块 ({start_time_ms / MS_PER_SECOND:.2f}s - {end_time_ms / MS_PER_SECOND:.2f}s) 时发生错误: {e}",
                         exc_info=True,
                     )
                 finally:
@@ -275,7 +292,5 @@ class ASRService(IASRService):
                                 f"删除临时音频文件 '{temp_chunk_file_path}' 时发生OS错误: {e_os}"
                             )
 
-            all_results.sort(key=lambda x: x["start"])
+            all_results.sort(key=lambda x: float(x.get("start", 0.0)))
             return all_results
-
-

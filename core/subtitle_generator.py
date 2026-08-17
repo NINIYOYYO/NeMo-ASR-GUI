@@ -1,25 +1,40 @@
+"""字幕格式生成与解析服务模块。
+
+支持标准 SRT、WebVTT、纯文本 TXT、JSON、歌词 LRC、ASS 以及逐词/逐字级字幕生成与解析。
+"""
 
 import json
 import re
 from typing import Any
 
-from interfaces import ISubtitleGenerator
+from core.constants import (
+    CENTISECONDS_PER_SECOND,
+    MS_PER_HOUR,
+    MS_PER_MINUTE,
+    MS_PER_SECOND,
+    SECONDS_PER_HOUR,
+    SECONDS_PER_MINUTE,
+    SubtitleFormat,
+)
+from interfaces import ISubtitleGenerator, SubtitleSegmentDict
 
 
 class SubtitleService(ISubtitleGenerator):
     """生成多种格式字幕文件内容的服务。
 
-    支持格式: SRT, VTT, TXT, JSON, LRC, ASS
+    支持格式: SRT, VTT, TXT, JSON, LRC, ASS, WORD_SRT, CHAR_SRT
     """
 
     def generate_content(
-        self, segment_timestamps: list[dict[str, Any]], format_type: str
+        self,
+        segment_timestamps: list[SubtitleSegmentDict] | list[dict[str, Any]],
+        format_type: str | SubtitleFormat,
     ) -> str:
         """根据时间戳列表生成指定格式的字幕内容。
 
         Args:
-            segment_timestamps (list[dict[str, Any]]): 包含 start, end, segment 等字段的字典列表。
-            format_type (str): 格式类型 (例如 'srt', 'vtt', 'txt', 'json', 'lrc', 'ass')。
+            segment_timestamps (list[SubtitleSegmentDict] | list[dict[str, Any]]): 包含 start, end, segment 等字段的字典列表。
+            format_type (str | SubtitleFormat): 格式类型 (例如 'srt', 'vtt', 'txt', 'json', 'lrc', 'ass')。
 
         Returns:
             str: 格式化后的字幕文本字符串。
@@ -27,7 +42,8 @@ class SubtitleService(ISubtitleGenerator):
         Raises:
             ValueError: 当请求不支持的字幕格式时抛出。
         """
-        method_name = f"_generate_{format_type.lower()}"
+        fmt_str = format_type.value if isinstance(format_type, SubtitleFormat) else str(format_type)
+        method_name = f"_generate_{fmt_str.lower()}"
         if hasattr(self, method_name):
             return getattr(self, method_name)(segment_timestamps)
         raise ValueError(f"不支持的字幕格式: {format_type}")
@@ -45,95 +61,108 @@ class SubtitleService(ISubtitleGenerator):
             str: 格式化后的时间字符串。
         """
         if seconds < 0:
-            seconds = 0
-        total_ms = int(round(seconds * 1000))
-        hours, rem = divmod(total_ms, 3600_000)
-        minutes, rem = divmod(rem, 60_000)
-        secs, milliseconds = divmod(rem, 1000)
+            seconds = 0.0
+        total_ms = int(round(seconds * MS_PER_SECOND))
+        hours, rem = divmod(total_ms, MS_PER_HOUR)
+        minutes, rem = divmod(rem, MS_PER_MINUTE)
+        secs, milliseconds = divmod(rem, MS_PER_SECOND)
         return f"{hours:02}:{minutes:02}:{secs:02}{separator}{milliseconds:03}"
 
-    def _generate_srt(self, segment_timestamps: list[dict[str, Any]]) -> str:
+    def _generate_srt(
+        self, segment_timestamps: list[SubtitleSegmentDict] | list[dict[str, Any]]
+    ) -> str:
         """根据时间戳列表生成标准 SRT 格式字幕。
 
         Args:
-            segment_timestamps (list[dict[str, Any]]): 时间戳段落列表。
+            segment_timestamps (list[SubtitleSegmentDict] | list[dict[str, Any]]): 时间戳段落列表。
 
         Returns:
             str: SRT 格式字符串。
         """
         blocks = [
-            f"{i + 1}\n{self.format_time(stamp['start'])} --> {self.format_time(stamp['end'])}\n{stamp['segment']}\n\n"
+            f"{i + 1}\n{self.format_time(float(stamp['start']))} --> {self.format_time(float(stamp['end']))}\n{stamp.get('segment', stamp.get('text', ''))}\n\n"
             for i, stamp in enumerate(segment_timestamps)
         ]
         return "".join(blocks)
 
-    def _generate_vtt(self, segment_timestamps: list[dict[str, Any]]) -> str:
+    def _generate_vtt(
+        self, segment_timestamps: list[SubtitleSegmentDict] | list[dict[str, Any]]
+    ) -> str:
         """根据时间戳列表生成 WebVTT 格式字幕。
 
         Args:
-            segment_timestamps (list[dict[str, Any]]): 时间戳段落列表。
+            segment_timestamps (list[SubtitleSegmentDict] | list[dict[str, Any]]): 时间戳段落列表。
 
         Returns:
             str: WebVTT 格式字符串。
         """
         blocks = ["WEBVTT\n\n"]
         for stamp in segment_timestamps:
-            start_time_vtt = self.format_time(stamp["start"], separator=".")
-            end_time_vtt = self.format_time(stamp["end"], separator=".")
-            segment_text = stamp["segment"].strip()
+            start_time_vtt = self.format_time(float(stamp["start"]), separator=".")
+            end_time_vtt = self.format_time(float(stamp["end"]), separator=".")
+            segment_text = str(stamp.get("segment", stamp.get("text", ""))).strip()
             blocks.append(f"{start_time_vtt} --> {end_time_vtt}\n{segment_text}\n\n")
         return "".join(blocks)
 
-    def _generate_txt(self, segment_timestamps: list[dict[str, Any]]) -> str:
+    def _generate_txt(
+        self, segment_timestamps: list[SubtitleSegmentDict] | list[dict[str, Any]]
+    ) -> str:
         """根据时间戳列表生成纯文本 TXT 字幕。
 
         Args:
-            segment_timestamps (list[dict[str, Any]]): 时间戳段落列表。
+            segment_timestamps (list[SubtitleSegmentDict] | list[dict[str, Any]]): 时间戳段落列表。
 
         Returns:
             str: 换行符连接的纯文本字符串。
         """
-        return "\n".join(s["segment"].strip() for s in segment_timestamps)
+        return "\n".join(str(s.get("segment", s.get("text", ""))).strip() for s in segment_timestamps)
 
-    def _generate_json(self, segment_timestamps: list[dict[str, Any]]) -> str:
+    def _generate_json(
+        self, segment_timestamps: list[SubtitleSegmentDict] | list[dict[str, Any]]
+    ) -> str:
         """根据时间戳列表生成 JSON 格式字幕数据。
 
         Args:
-            segment_timestamps (list[dict[str, Any]]): 时间戳段落列表。
+            segment_timestamps (list[SubtitleSegmentDict] | list[dict[str, Any]]): 时间戳段落列表。
 
         Returns:
             str: 格式化的 JSON 字符串。
         """
         return json.dumps(segment_timestamps, ensure_ascii=False, indent=4)
 
-    def _generate_lrc(self, segment_timestamps: list[dict[str, Any]]) -> str:
+    def _generate_lrc(
+        self, segment_timestamps: list[SubtitleSegmentDict] | list[dict[str, Any]]
+    ) -> str:
         """根据时间戳列表生成歌词 LRC 格式字幕。
 
         Args:
-            segment_timestamps (list[dict[str, Any]]): 时间戳段落列表。
+            segment_timestamps (list[SubtitleSegmentDict] | list[dict[str, Any]]): 时间戳段落列表。
 
         Returns:
             str: LRC 格式字符串。
         """
-        lines = []
+        lines: list[str] = []
         for stamp in segment_timestamps:
-            minutes = int(stamp["start"] // 60)
-            seconds = int(stamp["start"] % 60)
-            milliseconds = int((stamp["start"] * 100) % 100)
-            segment_text = stamp["segment"].strip()
+            start_f = float(stamp["start"])
+            minutes = int(start_f // SECONDS_PER_MINUTE)
+            seconds = int(start_f % SECONDS_PER_MINUTE)
+            milliseconds = int((start_f * CENTISECONDS_PER_SECOND) % CENTISECONDS_PER_SECOND)
+            segment_text = str(stamp.get("segment", stamp.get("text", ""))).strip()
             lines.append(f"[{minutes:02}:{seconds:02}.{milliseconds:02}]{segment_text}\n")
         return "".join(lines)
 
-    def _generate_word_srt(self, segment_timestamps: list[dict[str, Any]]) -> str:
+    def _generate_word_srt(
+        self, segment_timestamps: list[SubtitleSegmentDict] | list[dict[str, Any]]
+    ) -> str:
         """生成逐词级 SRT：每个词作为独立字幕块。
 
         Args:
-            segment_timestamps (list[dict[str, Any]]): 包含 words 列表的段落。
+            segment_timestamps (list[SubtitleSegmentDict] | list[dict[str, Any]]): 包含 words 列表的段落。
 
         Returns:
             str: 逐词 SRT 格式字符串。
         """
-        blocks = []
+        blocks: list[str] = []
         word_counter = 1
 
         for seg in segment_timestamps:
@@ -143,22 +172,25 @@ class SubtitleService(ISubtitleGenerator):
             if not words_in_seg:
                 blocks.append(
                     self._render_srt_block(
-                        word_counter, seg["start"], seg["end"], seg["segment"]
+                        word_counter,
+                        float(seg["start"]),
+                        float(seg["end"]),
+                        str(seg.get("segment", seg.get("text", ""))),
                     )
                 )
                 word_counter += 1
                 continue
 
             for w in words_in_seg:
-                word_text = w["word"].strip()
+                word_text = str(w.get("word", "")).strip()
                 if not word_text:
                     continue
 
                 blocks.append(
                     self._render_srt_block(
                         word_counter,
-                        w["start"],
-                        w["end"],
+                        float(w["start"]),
+                        float(w["end"]),
                         word_text,
                     )
                 )
@@ -166,16 +198,18 @@ class SubtitleService(ISubtitleGenerator):
 
         return "".join(blocks)
 
-    def _generate_char_srt(self, segment_timestamps: list[dict[str, Any]]) -> str:
+    def _generate_char_srt(
+        self, segment_timestamps: list[SubtitleSegmentDict] | list[dict[str, Any]]
+    ) -> str:
         """生成逐字级 SRT：每个字符作为独立字幕块。
 
         Args:
-            segment_timestamps (list[dict[str, Any]]): 包含 chars 列表的段落。
+            segment_timestamps (list[SubtitleSegmentDict] | list[dict[str, Any]]): 包含 chars 列表的段落。
 
         Returns:
             str: 逐字 SRT 格式字符串。
         """
-        blocks = []
+        blocks: list[str] = []
         char_counter = 1
 
         for seg in segment_timestamps:
@@ -185,22 +219,25 @@ class SubtitleService(ISubtitleGenerator):
             if not chars_in_seg:
                 blocks.append(
                     self._render_srt_block(
-                        char_counter, seg["start"], seg["end"], seg["segment"]
+                        char_counter,
+                        float(seg["start"]),
+                        float(seg["end"]),
+                        str(seg.get("segment", seg.get("text", ""))),
                     )
                 )
                 char_counter += 1
                 continue
 
             for c in chars_in_seg:
-                char_text = c["char"]
+                char_text = str(c.get("char", ""))
                 if not char_text:
                     continue
 
                 blocks.append(
                     self._render_srt_block(
                         char_counter,
-                        c["start"],
-                        c["end"],
+                        float(c["start"]),
+                        float(c["end"]),
                         char_text,
                     )
                 )
@@ -208,11 +245,13 @@ class SubtitleService(ISubtitleGenerator):
 
         return "".join(blocks)
 
-    def _generate_ass(self, segment_timestamps: list[dict[str, Any]]) -> str:
+    def _generate_ass(
+        self, segment_timestamps: list[SubtitleSegmentDict] | list[dict[str, Any]]
+    ) -> str:
         """生成 ASS 格式字幕内容。
 
         Args:
-            segment_timestamps (list[dict[str, Any]]): 时间戳段落列表。
+            segment_timestamps (list[SubtitleSegmentDict] | list[dict[str, Any]]): 时间戳段落列表。
 
         Returns:
             str: 包含头部和对话事件的 ASS 字幕字符串。
@@ -236,11 +275,11 @@ class SubtitleService(ISubtitleGenerator):
             "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
         )
 
-        lines = []
+        lines: list[str] = []
         for stamp in segment_timestamps:
-            start_t = self._format_ass_time(stamp["start"])
-            end_t = self._format_ass_time(stamp["end"])
-            text = stamp["segment"].strip().replace("\n", "\\N")
+            start_t = self._format_ass_time(float(stamp["start"]))
+            end_t = self._format_ass_time(float(stamp["end"]))
+            text = str(stamp.get("segment", stamp.get("text", ""))).strip().replace("\n", "\\N")
             line = f"Dialogue: 0,{start_t},{end_t},Default,,0,0,0,,{text}"
             lines.append(line)
 
@@ -256,12 +295,12 @@ class SubtitleService(ISubtitleGenerator):
             str: ASS 格式时间字符串。
         """
         if seconds < 0:
-            seconds = 0
-        hours = int(seconds // 3600)
-        minutes = int((seconds % 3600) // 60)
-        secs = int(seconds % 60)
-        centiseconds = int(round((seconds % 1) * 100))
-        if centiseconds == 100:
+            seconds = 0.0
+        hours = int(seconds // SECONDS_PER_HOUR)
+        minutes = int((seconds % SECONDS_PER_HOUR) // SECONDS_PER_MINUTE)
+        secs = int(seconds % SECONDS_PER_MINUTE)
+        centiseconds = int(round((seconds % 1) * CENTISECONDS_PER_SECOND))
+        if centiseconds == CENTISECONDS_PER_SECOND:
             return self._format_ass_time(seconds + 0.01)
 
         return f"{hours}:{minutes:02}:{secs:02}.{centiseconds:02}"
@@ -282,16 +321,16 @@ class SubtitleService(ISubtitleGenerator):
         """
         return f"{index}\n{self.format_time(start)} --> {self.format_time(end)}\n{text}\n\n"
 
-    def parse_srt(self, content: str) -> list[dict[str, Any]]:
+    def parse_srt(self, content: str) -> list[SubtitleSegmentDict]:
         """将 SRT 字符串解析为 segments 列表，支持 Windows CRLF 与 Unix LF 换行。
 
         Args:
             content (str): 待解析的 SRT 文本内容。
 
         Returns:
-            list[dict[str, Any]]: 解析出的字幕段落列表，每项包含 index, start, end, segment。
+            list[SubtitleSegmentDict]: 解析出的字幕段落列表，每项包含 index, start, end, segment。
         """
-        segments: list[dict[str, Any]] = []
+        segments: list[SubtitleSegmentDict] = []
         if not content or not content.strip():
             return segments
 
@@ -325,12 +364,18 @@ class SubtitleService(ISubtitleGenerator):
         """
         hours, mins, secs_ms = time_str.split(":")
         secs, ms = secs_ms.split(",")
-        return int(hours) * 3600 + int(mins) * 60 + int(secs) + int(ms) / 1000.0
+        return (
+            int(hours) * SECONDS_PER_HOUR
+            + int(mins) * SECONDS_PER_MINUTE
+            + int(secs)
+            + int(ms) / float(MS_PER_SECOND)
+        )
 
     # --- 向后兼容别名 ---
     def _format_time(self, seconds: float, separator: str = ",") -> str:
+        """向后兼容别名方法。"""
         return self.format_time(seconds, separator)
 
     def _srt_time_to_seconds(self, time_str: str) -> float:
+        """向后兼容别名方法。"""
         return self.srt_time_to_seconds(time_str)
-

@@ -1,8 +1,13 @@
+"""音频提取与预处理服务模块。
+
+使用 FFmpeg 从音视频文件中安全提取音频流并转换为 16kHz 单声道 WAV 格式。
+"""
 
 import os
 import subprocess
 import tempfile
 
+from core.constants import DEFAULT_AUDIO_CHANNELS, DEFAULT_SAMPLE_RATE
 from interfaces import IAudioService
 from utils.exceptions import AudioProcessingError
 from utils.logger import logger
@@ -70,9 +75,9 @@ class AudioService(IAudioService):
             "-acodec",
             "pcm_s16le",
             "-ar",
-            "16000",
+            str(DEFAULT_SAMPLE_RATE),
             "-ac",
-            "1",
+            str(DEFAULT_AUDIO_CHANNELS),
             "-y",
             output_audio_path,
         ]
@@ -101,5 +106,3 @@ class AudioService(IAudioService):
             if os.path.exists(output_audio_path):
                 os.remove(output_audio_path)
             raise AudioProcessingError("FFmpeg 未找到，请确保已安装") from e
-
-

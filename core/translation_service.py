@@ -1,3 +1,8 @@
+"""大语言模型字幕翻译与智能断句服务模块。
+
+提供基于 ID 映射法的稳定多语言翻译，以及基于动态规划 (DP) 锚点词对齐的 AI 智能断句。
+"""
+
 import asyncio
 import bisect
 import difflib
@@ -8,7 +13,19 @@ from typing import Any
 import httpx
 import openai
 
-from interfaces import ITranslationService
+from core.constants import (
+    DEFAULT_LLM_TEMPERATURE,
+    DEFAULT_LLM_TIMEOUT_SEC,
+    DEFAULT_MAX_RETRIES,
+    DEFAULT_RATE_LIMIT_WAIT_SEC,
+    DEFAULT_SEGMENTATION_CHUNK_SIZE,
+    DEFAULT_SEGMENTATION_CONCURRENCY,
+    DEFAULT_TRANSLATION_CHUNK_SIZE,
+    DEFAULT_TRANSLATION_CONCURRENCY,
+    MIN_SEGMENT_DURATION_SEC,
+    TaskType,
+)
+from interfaces import ITranslationService, SubtitleSegmentDict
 from utils.logger import logger
 
 
@@ -21,7 +38,7 @@ class TranslationService(ITranslationService):
 
     def __init__(self) -> None:
         """初始化翻译服务。"""
-        self.max_retries = 3
+        self.max_retries: int = DEFAULT_MAX_RETRIES
 
     def _extract_json(self, text: str) -> str:
         """从模型返回的 Markdown 或杂乱文本中提取纯 JSON 字符串。
@@ -82,8 +99,7 @@ class TranslationService(ITranslationService):
         if proxy and proxy.strip():
             proxy_mounts = {"all://": httpx.AsyncHTTPTransport(proxy=proxy.strip())}
 
-        # 增加超时时间到 180秒
-        timeout_val = 180.0
+        timeout_val = DEFAULT_LLM_TIMEOUT_SEC
 
         # 1. 适配 Gemini 原生接口 (使用 HTTP Header x-goog-api-key 传输密钥，避免 URL Query 明文泄露)
         if "generativelanguage.googleapis.com" in base_url:
@@ -96,7 +112,7 @@ class TranslationService(ITranslationService):
                 "contents": [{"parts": [{"text": prompt}]}],
                 "generationConfig": {
                     "responseMimeType": "application/json" if is_json else "text/plain",
-                    "temperature": 0.1,  # 低温保证稳定
+                    "temperature": DEFAULT_LLM_TEMPERATURE,
                 },
             }
             if "thinking" in model.lower():
@@ -112,7 +128,7 @@ class TranslationService(ITranslationService):
                     candidates = result.get("candidates", [])
                     if not candidates or "content" not in candidates[0]:
                         raise ValueError(f"Gemini 返回空结果 (可能触发安全拦截): {result}")
-                    return candidates[0]["content"]["parts"][0]["text"]
+                    return str(candidates[0]["content"]["parts"][0]["text"])
                 except (KeyError, IndexError):
                     raise ValueError(f"Gemini 返回格式异常: {result}") from None
 
@@ -124,37 +140,41 @@ class TranslationService(ITranslationService):
                 async_client = openai.AsyncOpenAI(
                     api_key=api_key, base_url=base_url, http_client=http_client
                 )
-                extra_args = (
+                extra_args: dict[str, Any] = (
                     {"response_format": {"type": "json_object"}} if is_json else {}
                 )
 
                 response = await async_client.chat.completions.create(
                     model=model,
                     messages=[{"role": "user", "content": prompt}],
-                    temperature=0.1,
+                    temperature=DEFAULT_LLM_TEMPERATURE,
                     **extra_args,
                 )
                 return response.choices[0].message.content or ""
 
     async def _process_chunk_with_retry(
-        self, chunk: list[dict[str, Any]], task_type: str, **kwargs: Any
-    ) -> list[dict[str, Any]]:
+        self,
+        chunk: list[SubtitleSegmentDict] | list[dict[str, Any]],
+        task_type: str | TaskType,
+        **kwargs: Any,
+    ) -> list[SubtitleSegmentDict]:
         """执行带有指数退避与 429 频控重试的核心处理任务。
 
         Args:
-            chunk (list[dict[str, Any]]): 待处理的字幕段落块。
-            task_type (str): 任务类型 ('translate' 或 'segment')。
+            chunk (list[SubtitleSegmentDict] | list[dict[str, Any]]): 待处理的字幕段落块。
+            task_type (str | TaskType): 任务类型 ('translate' 或 'segment')。
             **kwargs: 附加参数 (api_key, base_url, model, target_lang, is_bilingual, proxy 等)。
 
         Returns:
-            list[dict[str, Any]]: 处理完成的字幕段落列表。
+            list[SubtitleSegmentDict]: 处理完成的字幕段落列表。
         """
         api_key: str = kwargs["api_key"]
         base_url: str = kwargs["base_url"]
         model: str = kwargs["model"]
         proxy: str | None = kwargs.get("proxy")
+        task_type_str = task_type.value if isinstance(task_type, TaskType) else str(task_type)
 
-        source_texts = [s["segment"] for s in chunk]
+        source_texts = [str(s.get("segment", s.get("text", ""))) for s in chunk]
 
         for attempt in range(1, self.max_retries + 1):
             try:
@@ -162,8 +182,7 @@ class TranslationService(ITranslationService):
                 #  翻译任务：使用 ID 映射法 (Key-Value Mapping)
                 #  解决 Qwen/小模型容易出现行数不匹配和错位的问题
                 # =========================================================
-                if task_type == "translate":
-                    # 1. 构建输入字典 {"0": "text1", "1": "text2"}
+                if task_type_str == TaskType.TRANSLATE.value or task_type_str == "translate":
                     input_map = {str(i): text for i, text in enumerate(source_texts)}
 
                     prompt = self._build_translation_prompt(
@@ -174,7 +193,7 @@ class TranslationService(ITranslationService):
                         prompt, api_key, base_url, model, proxy, is_json=True
                     )
 
-                    # 2. 解析返回的 JSON
+                    # 解析返回的 JSON
                     try:
                         data = json.loads(self._extract_json(raw_response))
                     except json.JSONDecodeError:
@@ -182,26 +201,28 @@ class TranslationService(ITranslationService):
                             f"模型未返回有效 JSON: {raw_response[:50]}..."
                         ) from None
 
-                    # 3. 兼容性处理：有些模型会把结果包在 'translations' 键里，有些直接返回字典
                     result_map = data
                     if "translations" in data and isinstance(data["translations"], dict):
                         result_map = data["translations"]
 
-                    res_chunk = []
-                    # 4. 严格按 ID 取回结果
+                    res_chunk: list[SubtitleSegmentDict] = []
+                    # 严格按 ID 取回结果
                     for i, seg in enumerate(chunk):
                         key = str(i)
-                        original_text = seg["segment"]
+                        original_text = str(seg.get("segment", seg.get("text", "")))
 
-                        # 尝试获取翻译
                         t_text = result_map.get(key)
-
-                        # 简单清洗：如果翻译为空或只是个ID，回退原文
                         if not t_text or str(t_text).strip() == key:
                             t_text = original_text
 
-                        new_seg = seg.copy()
-                        # 组装双语
+                        new_seg: SubtitleSegmentDict = {
+                            "start": float(seg["start"]),
+                            "end": float(seg["end"]),
+                            "segment": original_text,
+                        }
+                        if "index" in seg:
+                            new_seg["index"] = int(seg["index"])
+
                         if kwargs.get("is_bilingual"):
                             if str(t_text).strip() == original_text.strip():
                                 new_seg["segment"] = original_text
@@ -227,40 +248,54 @@ class TranslationService(ITranslationService):
 
             except Exception as e:
                 # 针对 429 错误的特殊处理
-                wait_time = (2**attempt) + 1
+                wait_time: float = float((2**attempt) + 1)
                 error_str = str(e)
                 if "429" in error_str or "Too Many Requests" in error_str:
                     logger.warning("触发 API 频率限制 (429)，强制等待 20 秒...")
-                    wait_time = 20
+                    wait_time = DEFAULT_RATE_LIMIT_WAIT_SEC
 
                 logger.warning(
-                    f"[重试 {attempt}/{self.max_retries}] {task_type} 失败: {e}. {wait_time}s 后重试..."
+                    f"[重试 {attempt}/{self.max_retries}] {task_type_str} 失败: {e}. {wait_time}s 后重试..."
                 )
 
                 if attempt == self.max_retries:
-                    logger.error(f"{task_type} 分块彻底失败，保全时间轴，返回原文")
-                    return chunk
+                    logger.error(f"{task_type_str} 分块彻底失败，保全时间轴，返回原文")
+                    return [
+                        {
+                            "start": float(s["start"]),
+                            "end": float(s["end"]),
+                            "segment": str(s.get("segment", s.get("text", ""))),
+                        }
+                        for s in chunk
+                    ]
 
                 await asyncio.sleep(wait_time)
 
-        return chunk
+        return [
+            {
+                "start": float(s["start"]),
+                "end": float(s["end"]),
+                "segment": str(s.get("segment", s.get("text", ""))),
+            }
+            for s in chunk
+        ]
 
     async def translate_segments(
         self,
-        segments: list[dict[str, Any]],
+        segments: list[SubtitleSegmentDict] | list[dict[str, Any]],
         target_lang: str,
         api_key: str,
         base_url: str,
         model: str,
         is_bilingual: bool,
         proxy: str | None = None,
-        concurrency: int = 5,
-        chunk_size: int = 30,
-    ) -> list[dict[str, Any]]:
+        concurrency: int = DEFAULT_TRANSLATION_CONCURRENCY,
+        chunk_size: int = DEFAULT_TRANSLATION_CHUNK_SIZE,
+    ) -> list[SubtitleSegmentDict]:
         """并发调用大模型翻译字幕段落。
 
         Args:
-            segments (list[dict[str, Any]]): 待翻译的字幕列表。
+            segments (list[SubtitleSegmentDict] | list[dict[str, Any]]): 待翻译的字幕列表。
             target_lang (str): 目标语言名称。
             api_key (str): API 密钥。
             base_url (str): API 基础 URL。
@@ -271,7 +306,7 @@ class TranslationService(ITranslationService):
             chunk_size (int): 每个批次的段落数量。
 
         Returns:
-            list[dict[str, Any]]: 翻译完成的字幕列表。
+            list[SubtitleSegmentDict]: 翻译完成的字幕列表。
         """
         if not segments:
             return []
@@ -280,11 +315,21 @@ class TranslationService(ITranslationService):
             segments[i : i + chunk_size] for i in range(0, len(segments), chunk_size)
         ]
 
-        async def worker(c: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        async def worker(
+            c: list[SubtitleSegmentDict] | list[dict[str, Any]],
+        ) -> list[SubtitleSegmentDict]:
+            """并发处理单个分块翻译任务。
+
+            Args:
+                c (list[SubtitleSegmentDict] | list[dict[str, Any]]): 单个字幕分块。
+
+            Returns:
+                list[SubtitleSegmentDict]: 翻译后的字幕分块。
+            """
             async with semaphore:
                 return await self._process_chunk_with_retry(
                     c,
-                    "translate",
+                    TaskType.TRANSLATE,
                     target_lang=target_lang,
                     is_bilingual=is_bilingual,
                     api_key=api_key,
@@ -300,18 +345,18 @@ class TranslationService(ITranslationService):
 
     async def segment_subtitles(
         self,
-        segments: list[dict[str, Any]],
+        segments: list[SubtitleSegmentDict] | list[dict[str, Any]],
         api_key: str,
         base_url: str,
         model: str,
         proxy: str | None = None,
-        concurrency: int = 3,
-        chunk_size: int = 50,
-    ) -> list[dict[str, Any]]:
+        concurrency: int = DEFAULT_SEGMENTATION_CONCURRENCY,
+        chunk_size: int = DEFAULT_SEGMENTATION_CHUNK_SIZE,
+    ) -> list[SubtitleSegmentDict]:
         """并发调用大模型进行智能断句重构。
 
         Args:
-            segments (list[dict[str, Any]]): 待断句的字幕列表。
+            segments (list[SubtitleSegmentDict] | list[dict[str, Any]]): 待断句的字幕列表。
             api_key (str): API 密钥。
             base_url (str): API 基础 URL。
             model (str): 模型名称。
@@ -320,7 +365,7 @@ class TranslationService(ITranslationService):
             chunk_size (int): 每个批次的段落数量。
 
         Returns:
-            list[dict[str, Any]]: 断句与时间戳重对齐后的字幕列表。
+            list[SubtitleSegmentDict]: 断句与时间戳重对齐后的字幕列表。
         """
         if not segments:
             return []
@@ -329,11 +374,21 @@ class TranslationService(ITranslationService):
             segments[i : i + chunk_size] for i in range(0, len(segments), chunk_size)
         ]
 
-        async def worker(c: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        async def worker(
+            c: list[SubtitleSegmentDict] | list[dict[str, Any]],
+        ) -> list[SubtitleSegmentDict]:
+            """并发处理单个分块断句任务。
+
+            Args:
+                c (list[SubtitleSegmentDict] | list[dict[str, Any]]): 单个字幕分块。
+
+            Returns:
+                list[SubtitleSegmentDict]: 断句后的字幕分块。
+            """
             async with semaphore:
                 return await self._process_chunk_with_retry(
                     c,
-                    "segment",
+                    TaskType.SEGMENT,
                     api_key=api_key,
                     base_url=base_url,
                     model=model,
@@ -392,60 +447,78 @@ class TranslationService(ITranslationService):
         """
 
     def align_timestamps(
-        self, original_segments: list[dict[str, Any]], llm_text: str
-    ) -> list[dict[str, Any]]:
+        self,
+        original_segments: list[SubtitleSegmentDict] | list[dict[str, Any]],
+        llm_text: str,
+    ) -> list[SubtitleSegmentDict]:
         """基于动态规划与锚点词序列对齐算法重组时间戳（公开方法）。
 
         Args:
-            original_segments (list[dict[str, Any]]): 包含已知时间戳的原始段落。
+            original_segments (list[SubtitleSegmentDict] | list[dict[str, Any]]): 包含已知时间戳的原始段落。
             llm_text (str): 包含 '|' 分隔符的大模型断句文本。
 
         Returns:
-            list[dict[str, Any]]: 重对齐后的新段落列表。
+            list[SubtitleSegmentDict]: 重对齐后的新段落列表。
         """
         return self._realign_timestamps(original_segments, llm_text)
 
     def _realign_timestamps(
-        self, original_segments: list[dict[str, Any]], llm_text: str
-    ) -> list[dict[str, Any]]:
+        self,
+        original_segments: list[SubtitleSegmentDict] | list[dict[str, Any]],
+        llm_text: str,
+    ) -> list[SubtitleSegmentDict]:
         """基于动态规划（DP）与锚点词序列对齐算法，将大模型断句结果对齐到原始音频时间轴。
 
         通过 difflib.SequenceMatcher 建立原文字符与重构文本字符之间的非重叠最长单调匹配块，
         对匹配字符直接继承原始精确时间戳，对增删改的词句在相邻锚点间进行局部线性插值，彻底消除累积漂移。
 
         Args:
-            original_segments (list[dict[str, Any]]): 包含已知时间戳的原始段落。
+            original_segments (list[SubtitleSegmentDict] | list[dict[str, Any]]): 包含已知时间戳的原始段落。
             llm_text (str): 包含 '|' 分隔符的大模型断句文本。
 
         Returns:
-            list[dict[str, Any]]: 重对齐后的新段落列表。
+            list[SubtitleSegmentDict]: 重对齐后的新段落列表。
         """
         if not original_segments:
             return []
         if not llm_text or "|" not in llm_text:
-            return original_segments
+            return [
+                {
+                    "start": float(s["start"]),
+                    "end": float(s["end"]),
+                    "segment": str(s.get("segment", s.get("text", ""))),
+                }
+                for s in original_segments
+            ]
 
         # 1. 提取原始字符级时间戳时间轴
         orig_chars: list[dict[str, Any]] = []
         for seg in original_segments:
-            text = seg.get("segment", "")
+            text = str(seg.get("segment", seg.get("text", "")))
             clean_text = re.sub(r"\s+", "", text)
             if not clean_text:
                 continue
 
-            duration = max(0.01, seg["end"] - seg["start"])
+            duration = max(0.01, float(seg["end"]) - float(seg["start"]))
             char_duration = duration / len(clean_text)
             for i, char in enumerate(clean_text):
-                c_start = seg["start"] + (i * char_duration)
+                c_start = float(seg["start"]) + (i * char_duration)
                 c_end = c_start + char_duration
                 orig_chars.append({"char": char, "start": c_start, "end": c_end})
 
         if not orig_chars:
-            return original_segments
+            return [
+                {
+                    "start": float(s["start"]),
+                    "end": float(s["end"]),
+                    "segment": str(s.get("segment", s.get("text", ""))),
+                }
+                for s in original_segments
+            ]
 
-        orig_str = "".join(c["char"] for c in orig_chars)
-        orig_total_start = orig_chars[0]["start"]
-        orig_total_end = orig_chars[-1]["end"]
+        orig_str = "".join(str(c["char"]) for c in orig_chars)
+        orig_total_start = float(orig_chars[0]["start"])
+        orig_total_end = float(orig_chars[-1]["end"])
         avg_char_dur = max(
             0.01, (orig_total_end - orig_total_start) / len(orig_chars)
         )
@@ -466,7 +539,14 @@ class TranslationService(ITranslationService):
             curr_pos += p_len
 
         if not part_spans:
-            return original_segments
+            return [
+                {
+                    "start": float(s["start"]),
+                    "end": float(s["end"]),
+                    "segment": str(s.get("segment", s.get("text", ""))),
+                }
+                for s in original_segments
+            ]
 
         llm_clean_str = "".join(part_clean_texts)
         llm_len = len(llm_clean_str)
@@ -485,8 +565,8 @@ class TranslationService(ITranslationService):
                 l_idx = llm_j + k
                 if o_idx < len(orig_chars):
                     matched_times[l_idx] = (
-                        orig_chars[o_idx]["start"],
-                        orig_chars[o_idx]["end"],
+                        float(orig_chars[o_idx]["start"]),
+                        float(orig_chars[o_idx]["end"]),
                     )
 
         # 4. 对未匹配的字符在相邻锚点间进行局部线性插值与平滑外推
@@ -537,7 +617,7 @@ class TranslationService(ITranslationService):
                         full_llm_times.append((s, e))
 
         # 5. 组合生成新段落并进行单调性与最小间隔保护
-        new_segments: list[dict[str, Any]] = []
+        new_segments: list[SubtitleSegmentDict] = []
         prev_end = orig_total_start
 
         for start_idx, end_idx, raw_text in part_spans:
@@ -548,8 +628,8 @@ class TranslationService(ITranslationService):
             if s_time < prev_end:
                 s_time = prev_end
 
-            # 保证字幕段落最小持续时间 (0.05s)
-            min_span = max(0.05, (end_idx - start_idx) * 0.02)
+            # 保证字幕段落最小持续时间 (MIN_SEGMENT_DURATION_SEC)
+            min_span = max(MIN_SEGMENT_DURATION_SEC, (end_idx - start_idx) * 0.02)
             if e_time <= s_time:
                 e_time = s_time + min_span
 
@@ -564,7 +644,13 @@ class TranslationService(ITranslationService):
 
         if not new_segments:
             logger.warning("AI 断句对齐失败，回退到原始分段")
-            return original_segments
+            return [
+                {
+                    "start": float(s["start"]),
+                    "end": float(s["end"]),
+                    "segment": str(s.get("segment", s.get("text", ""))),
+                }
+                for s in original_segments
+            ]
 
         return new_segments
-
