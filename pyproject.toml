@@ -38,7 +38,7 @@ dev = [
 # ========================
 [tool.ruff]
 line-length = 120
-target-version = "py310"
+target-version = "py312"
 extend-exclude = [
     "experiments",
     "test.py", "test2.py", "test3.py", "test5.py",
@@ -59,7 +59,7 @@ known-first-party = ["controllers", "core", "utils", "interfaces", "application"
 # Mypy：先宽松起步，逐步收紧
 # ========================
 [tool.mypy]
-python_version = "3.10"
+python_version = "3.12"
 files = ["main.py", "application.py", "app_ui.py", "interfaces.py", "controllers", "core", "utils"]
 ignore_missing_imports = true   # nemo/gradio/pydub 等无类型存根
 check_untyped_defs = true
