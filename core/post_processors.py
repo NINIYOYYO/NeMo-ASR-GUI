@@ -244,10 +244,16 @@ class JapaneseCharStrategy(ITranscriptionStrategy):
                     # 确保最短时长
                     if (final_end - current_segment_start) < 0.5:
                         final_end = max(final_end, current_segment_start + 0.5)
-                    
-                    # 防止时间轴重叠
-                    if not is_last_char and final_end > char_timestamps[i+1]['start']:
-                         final_end = char_timestamps[i+1]['start'] - 0.01
+
+                    # 防止时间轴重叠并杜绝负时隙倒流
+                    if not is_last_char:
+                        next_start = char_timestamps[i + 1]["start"]
+                        if final_end >= next_start:
+                            final_end = max(current_segment_start + 0.05, next_start - 0.01)
+
+                    # 保底确保结束时间不早于起始时间
+                    if final_end < current_segment_start:
+                        final_end = current_segment_start + 0.05
 
                     # --- 核心：返回符合嵌套标准的数据结构 ---
                     segments.append({
