@@ -171,6 +171,7 @@ def get_svg_icon(
     width: int = 16,
     height: int = 16,
     color: str = "currentColor",
+    class_name: str = "",
 ) -> str:
     """根据图标名称获取调整尺寸与颜色后的纯 SVG 字符串。
 
@@ -179,6 +180,7 @@ def get_svg_icon(
         width (int): 图标渲染宽度（像素），默认 16。
         height (int): 图标渲染高度（像素），默认 16。
         color (str): 图标线条或填充颜色，默认 'currentColor'。
+        class_name (str): 可选的 CSS 类名，默认为空字符串。
 
     Returns:
         str: 格式化后的纯 SVG XML 字符串。若未找到匹配图标则返回空字符串。
@@ -192,24 +194,35 @@ def get_svg_icon(
     svg = re.sub(r'height="\d+"', f'height="{height}"', svg)
     if color != "currentColor":
         svg = svg.replace('stroke="currentColor"', f'stroke="{color}"')
+    if class_name:
+        svg = re.sub(r'<svg\s+', f'<svg class="{class_name}" ', svg, count=1)
 
     return svg
 
 
-def render_svg_html(svg_str: str, text: str = "", gap: int = 6) -> str:
+def render_svg_html(
+    svg_str: str,
+    text: str = "",
+    gap: int = 6,
+    class_name: str = "",
+) -> str:
     """将 SVG 图标与文本包裹在内联 HTML 容器中，适用于 Gradio HTML/Markdown 显示。
 
     Args:
         svg_str (str): 纯 SVG 字符串。
         text (str): 与图标并排显示的文本内容。
         gap (int): 图标与文本之间的间距（像素），默认 6。
+        class_name (str): 可选的容器 CSS 类名，默认为空字符串。
 
     Returns:
         str: 包含 flexbox 垂直对齐的 HTML 字符串。
     """
     if not text:
         return svg_str
+
+    class_attr = f' class="{class_name}"' if class_name else ""
     return (
-        f'<span style="display:inline-flex;align-items:center;gap:{gap}px;'
+        f'<span{class_attr} style="display:inline-flex;align-items:center;gap: {gap}px;'
         f'vertical-align:middle;">{svg_str}<span>{text}</span></span>'
     )
+

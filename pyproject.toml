@@ -40,6 +40,7 @@ dev = [
 line-length = 120
 target-version = "py312"
 extend-exclude = [
+    ".agents",
     "experiments",
     "test.py", "test2.py", "test3.py", "test5.py",
     "main2.py",

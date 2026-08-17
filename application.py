@@ -23,20 +23,37 @@ class Application(IApplication):
 
     def __init__(
         self,
-        config_manager: IConfigManager,
-        asr_service: IASRService,
-        audio_service: IAudioService,
-        subtitle_generator: ISubtitleGenerator,
+        config_manager: IConfigManager | None = None,
+        asr_service: IASRService | None = None,
+        audio_service: IAudioService | None = None,
+        subtitle_generator: ISubtitleGenerator | None = None,
     ) -> None:
         """初始化应用程序并装配所有服务与控制器。
 
         Args:
-            config_manager (IConfigManager): 配置管理器实例。
-            asr_service (IASRService): ASR 模型识别服务实例。
-            audio_service (IAudioService): 音频提取服务实例。
-            subtitle_generator (ISubtitleGenerator): 字幕生成服务实例。
+            config_manager (IConfigManager | None): 配置管理器实例。为 None 时创建默认实例。
+            asr_service (IASRService | None): ASR 模型识别服务实例。为 None 时创建默认实例。
+            audio_service (IAudioService | None): 音频提取服务实例。为 None 时创建默认实例。
+            subtitle_generator (ISubtitleGenerator | None): 字幕生成服务实例。为 None 时创建默认实例。
         """
-        # 初始化核心服务
+        # 初始化核心服务（支持无参缺省构建）
+        if config_manager is None:
+            from utils.config_manager import ConfigManager
+
+            config_manager = ConfigManager()
+        if asr_service is None:
+            from core.asr_service import ASRService
+
+            asr_service = ASRService()
+        if audio_service is None:
+            from core.audio_processor import AudioService
+
+            audio_service = AudioService()
+        if subtitle_generator is None:
+            from core.subtitle_generator import SubtitleService
+
+            subtitle_generator = SubtitleService()
+
         self._config_manager: IConfigManager = config_manager
         self._asr_service: IASRService = asr_service
         self._audio_service: IAudioService = audio_service
@@ -148,3 +165,8 @@ class Application(IApplication):
         """构建并启动 Gradio UI 应用程序。"""
         ui = create_ui(self)
         ui.launch()
+
+
+# 应用程序状态与实例别名，保持与测试架构的兼容性
+AppState = Application
+

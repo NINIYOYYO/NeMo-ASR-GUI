@@ -1,6 +1,6 @@
 {
   "app": {
-    "title": "Video/Audio Automatic Subtitle Generator (NeMo ASR)",
+    "title": "Video/Audio Automatic Subtitle Generator (Parakeet TDT / NeMo ASR)",
     "description": "Upload video or audio files to automatically generate  subtitles. Supports multiple NVIDIA NeMo ASR models.",
     "startup": "Starting ASR Application...",
     "shutdown": "ASR Application Closed."

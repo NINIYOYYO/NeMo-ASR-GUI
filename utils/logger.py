@@ -39,7 +39,15 @@ class SafeStreamHandler(logging.StreamHandler):
             if self.stream and not getattr(self.stream, "closed", False):
                 super().emit(record)
         except Exception:
-            self.handleError(record)
+            pass
+
+    def flush(self) -> None:
+        """安全刷新底层流缓冲区，静默吞噬流已关闭异常。"""
+        try:
+            if self.stream and not getattr(self.stream, "closed", False):
+                super().flush()
+        except Exception:
+            pass
 
 
 def _create_default_filter() -> logging.Filter:

@@ -1,6 +1,6 @@
 {
   "app": {
-    "title": "视频/音频自动生成字幕工具 (NeMo ASR)",
+    "title": "视频/音频自动生成字幕工具 (Parakeet TDT / NeMo ASR)",
     "description": "上传视频或音频文件，自动生成字幕。支持多种 NVIDIA NeMo ASR 模型。",
     "startup": "启动 ASR 应用程序...",
     "shutdown": "ASR 应用程序已关闭。"

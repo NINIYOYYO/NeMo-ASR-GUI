@@ -481,7 +481,7 @@ class TranslationService(ITranslationService):
         """
         if not original_segments:
             return []
-        if not llm_text or "|" not in llm_text:
+        if not llm_text or not llm_text.strip():
             return [
                 {
                     "start": float(s["start"]),
@@ -522,6 +522,22 @@ class TranslationService(ITranslationService):
         avg_char_dur = max(
             0.01, (orig_total_end - orig_total_start) / len(orig_chars)
         )
+
+        # 针对无断句标记 | 的输入：若与原文相似度极低则判定为无效改写并安全回退；若高相似度则支持整段合并
+        if "|" not in llm_text:
+            clean_llm_single = re.sub(r"\s+", "", llm_text)
+            sim_ratio = difflib.SequenceMatcher(
+                None, orig_str, clean_llm_single, autojunk=False
+            ).ratio()
+            if sim_ratio < 0.4:
+                return [
+                    {
+                        "start": float(s["start"]),
+                        "end": float(s["end"]),
+                        "segment": str(s.get("segment", s.get("text", ""))),
+                    }
+                    for s in original_segments
+                ]
 
         # 2. 解析大模型返回的分段部分，记录各段在去空格合并串中的起止索引
         raw_parts = [p.strip() for p in llm_text.split("|")]
@@ -582,26 +598,32 @@ class TranslationService(ITranslationService):
                 e = s + dur_per_char
                 full_llm_times.append((s, e))
         else:
+            first_idx = sorted_matched_indices[0]
+            first_start = matched_times[first_idx][0]
+            last_idx = sorted_matched_indices[-1]
+            last_end = matched_times[last_idx][1]
+
             for l_idx in range(llm_len):
                 if l_idx in matched_times:
                     full_llm_times.append(matched_times[l_idx])
                 else:
                     pos = bisect.bisect_left(sorted_matched_indices, l_idx)
                     if pos == 0:
-                        # 位于首个锚点前，向前外推
-                        first_idx = sorted_matched_indices[0]
-                        first_start = matched_times[first_idx][0]
-                        offset = (first_idx - l_idx) * avg_char_dur
-                        s = max(orig_total_start, first_start - offset)
+                        # 位于首个锚点前，向前从 orig_total_start 平滑插值
+                        if first_idx > 0:
+                            s = orig_total_start + (l_idx / first_idx) * max(0.0, first_start - orig_total_start)
+                        else:
+                            s = orig_total_start
                         e = s + avg_char_dur
                         full_llm_times.append((s, e))
                     elif pos == len(sorted_matched_indices):
-                        # 位于末尾锚点后，向后外推
-                        last_idx = sorted_matched_indices[-1]
-                        last_end = matched_times[last_idx][1]
-                        offset = (l_idx - last_idx) * avg_char_dur
-                        s = min(orig_total_end, last_end + offset - avg_char_dur)
-                        e = min(orig_total_end + avg_char_dur, s + avg_char_dur)
+                        # 位于末尾锚点后，向后向 orig_total_end 平滑插值
+                        remaining = (llm_len - 1) - last_idx
+                        if remaining > 0:
+                            s = last_end + ((l_idx - last_idx) / remaining) * max(0.0, orig_total_end - last_end)
+                        else:
+                            s = last_end
+                        e = s + avg_char_dur
                         full_llm_times.append((s, e))
                     else:
                         # 位于两个锚点之间，线性插值
@@ -620,9 +642,16 @@ class TranslationService(ITranslationService):
         new_segments: list[SubtitleSegmentDict] = []
         prev_end = orig_total_start
 
-        for start_idx, end_idx, raw_text in part_spans:
-            s_time = full_llm_times[start_idx][0]
-            e_time = full_llm_times[end_idx - 1][1]
+        for seg_idx, (start_idx, end_idx, raw_text) in enumerate(part_spans):
+            if seg_idx == 0:
+                s_time = orig_total_start
+            else:
+                s_time = full_llm_times[start_idx][0]
+
+            if seg_idx == len(part_spans) - 1:
+                e_time = orig_total_end
+            else:
+                e_time = full_llm_times[end_idx - 1][1]
 
             # 保证时间不倒流
             if s_time < prev_end:

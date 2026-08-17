@@ -1,6 +1,6 @@
 {
   "app": {
-    "title": "ビデオ/オーディオから字幕を自動生成 (NeMo ASR)",
+    "title": "ビデオ/オーディオから字幕を自動生成 (Parakeet TDT / NeMo ASR)",
     "description": "ビデオまたはオーディオファイルをアップロードして、字幕を自動生成します。複数のNVIDIA NeMo ASRモデルに対応しています。",
     "startup": "ASRアプリケーションを起動しています...",
     "shutdown": "ASRアプリケーションはシャットダウンしました。"

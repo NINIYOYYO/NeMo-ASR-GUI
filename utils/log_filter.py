@@ -34,16 +34,35 @@ class ConfigurableFilter(logging.Filter):
         """
         try:
             with open(config_path, "r", encoding="utf-8") as f:
-                config: dict[str, Any] = yaml.safe_load(f) or {}
+                content = f.read()
+
+            config: dict[str, Any] = {}
+            try:
+                config = yaml.safe_load(content) or {}
+            except yaml.YAMLError:
+                # 针对双引号内含有未转义正则表达式（如 \.、\d、\[ 等）的容错处理
+                sanitized = re.sub(
+                    r'pattern:\s*"([^"]*)"',
+                    lambda m: "pattern: '" + m.group(1).replace("'", "''") + "'",
+                    content,
+                )
+                try:
+                    config = yaml.safe_load(sanitized) or {}
+                except Exception:
+                    config = {}
 
             # 编译正则表达式模式并存储 min_level 规则
-            filters = config.get("message_filters", [])
+            filters = config.get("message_filters", []) if isinstance(config, dict) else []
             for filter_rule in filters:
+                if not isinstance(filter_rule, dict):
+                    continue
                 pattern_str = filter_rule.get("pattern", "")
                 if not pattern_str:
                     continue
                 pattern = re.compile(pattern_str)
-                level_name = filter_rule.get("level", "DEBUG")
+                level_name = str(
+                    filter_rule.get("min_level") or filter_rule.get("level", "DEBUG")
+                )
                 min_level = getattr(logging, level_name.upper(), logging.DEBUG)
                 self.message_patterns.append(
                     {
