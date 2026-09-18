@@ -82,12 +82,8 @@ class DefaultSegmentStrategy(ITranscriptionStrategy):
         raw_ts = chunk_output_list[0].timestamp
 
         # 2. 预提取并转换所有字符级和单词级数据（转换为全局时间）
-        all_chars: list[CharTimestampDict] = self._extract_global_chars(
-            raw_ts.get("char", []), chunk_offset_sec
-        )
-        all_words: list[WordTimestampDict] = self._extract_global_words(
-            raw_ts.get("word", []), chunk_offset_sec
-        )
+        all_chars: list[CharTimestampDict] = self._extract_global_chars(raw_ts.get("char", []), chunk_offset_sec)
+        all_words: list[WordTimestampDict] = self._extract_global_words(raw_ts.get("word", []), chunk_offset_sec)
 
         # 3. 提取原始段落并建立嵌套关系
         raw_segments: list[SubtitleSegmentDict] = []
@@ -130,9 +126,7 @@ class DefaultSegmentStrategy(ITranscriptionStrategy):
 
         return raw_segments
 
-    def _extract_global_chars(
-        self, items: list[dict[str, Any]], offset: float
-    ) -> list[CharTimestampDict]:
+    def _extract_global_chars(self, items: list[dict[str, Any]], offset: float) -> list[CharTimestampDict]:
         """将局部字符时间戳项转换为全局时间戳项。
 
         Args:
@@ -153,9 +147,7 @@ class DefaultSegmentStrategy(ITranscriptionStrategy):
             )
         return results
 
-    def _extract_global_words(
-        self, items: list[dict[str, Any]], offset: float
-    ) -> list[WordTimestampDict]:
+    def _extract_global_words(self, items: list[dict[str, Any]], offset: float) -> list[WordTimestampDict]:
         """将局部词级时间戳项转换为全局时间戳项。
 
         Args:
@@ -176,9 +168,7 @@ class DefaultSegmentStrategy(ITranscriptionStrategy):
             )
         return results
 
-    def _split_long_segments(
-        self, segments: list[SubtitleSegmentDict], max_chars: int
-    ) -> list[SubtitleSegmentDict]:
+    def _split_long_segments(self, segments: list[SubtitleSegmentDict], max_chars: int) -> list[SubtitleSegmentDict]:
         """将超长句子切分为多行，并重新分配时间戳和嵌套项。
 
         Args:
@@ -295,9 +285,7 @@ class JapaneseCharStrategy(ITranscriptionStrategy):
                 )
 
         # 3. 调用重组算法 (将 UI 的 max_chars 传入作为硬限制)
-        return self._group_chars_into_segments(
-            char_timestamps, user_max_chars=max_chars
-        )
+        return self._group_chars_into_segments(char_timestamps, user_max_chars=max_chars)
 
     def _group_chars_into_segments(
         self,
@@ -374,16 +362,12 @@ class JapaneseCharStrategy(ITranscriptionStrategy):
                 segment_text = "".join([c["char"] for c in current_segment_objs]).strip()
 
                 # 过滤纯标点的无效段落
-                if segment_text and not all(
-                    c in weak_pauses or c in strong_endings for c in segment_text
-                ):
+                if segment_text and not all(c in weak_pauses or c in strong_endings for c in segment_text):
                     final_end = char_end
 
                     # 确保最短时长
                     if (final_end - current_segment_start) < MIN_JAPANESE_SEGMENT_DURATION_SEC:
-                        final_end = max(
-                            final_end, current_segment_start + MIN_JAPANESE_SEGMENT_DURATION_SEC
-                        )
+                        final_end = max(final_end, current_segment_start + MIN_JAPANESE_SEGMENT_DURATION_SEC)
 
                     # 防止时间轴重叠并杜绝负时隙倒流
                     if not is_last_char:

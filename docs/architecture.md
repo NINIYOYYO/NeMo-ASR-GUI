@@ -46,11 +46,11 @@
 
 ```python
 {
-    "start": float,      # 全局起始秒
-    "end": float,        # 全局结束秒
-    "segment": str,      # 文本
-    "chars": [ {"char": str, "start": float, "end": float}, ... ],  # 可选
-    "words": [ {"word": str, "start": float, "end": float}, ... ],  # 可选
+    "start": float,  # 全局起始秒
+    "end": float,  # 全局结束秒
+    "segment": str,  # 文本
+    "chars": [{"char": str, "start": float, "end": float}, ...],  # 可选
+    "words": [{"word": str, "start": float, "end": float}, ...],  # 可选
 }
 ```
 

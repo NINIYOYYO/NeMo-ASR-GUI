@@ -118,9 +118,7 @@ class TranslationService(ITranslationService):
             if "thinking" in model.lower():
                 payload["generationConfig"]["thinkingConfig"] = {"includeThoughts": False}
 
-            async with httpx.AsyncClient(
-                mounts=proxy_mounts, timeout=timeout_val, headers=headers
-            ) as client:
+            async with httpx.AsyncClient(mounts=proxy_mounts, timeout=timeout_val, headers=headers) as client:
                 resp = await client.post(url, json=payload)
                 resp.raise_for_status()
                 result = resp.json()
@@ -134,15 +132,9 @@ class TranslationService(ITranslationService):
 
         # 2. 适配 OpenAI 兼容接口 (硅基流动/DeepSeek等)
         else:
-            async with httpx.AsyncClient(
-                mounts=proxy_mounts, timeout=timeout_val
-            ) as http_client:
-                async_client = openai.AsyncOpenAI(
-                    api_key=api_key, base_url=base_url, http_client=http_client
-                )
-                extra_args: dict[str, Any] = (
-                    {"response_format": {"type": "json_object"}} if is_json else {}
-                )
+            async with httpx.AsyncClient(mounts=proxy_mounts, timeout=timeout_val) as http_client:
+                async_client = openai.AsyncOpenAI(api_key=api_key, base_url=base_url, http_client=http_client)
+                extra_args: dict[str, Any] = {"response_format": {"type": "json_object"}} if is_json else {}
 
                 response = await async_client.chat.completions.create(
                     model=model,
@@ -185,21 +177,15 @@ class TranslationService(ITranslationService):
                 if task_type_str == TaskType.TRANSLATE.value or task_type_str == "translate":
                     input_map = {str(i): text for i, text in enumerate(source_texts)}
 
-                    prompt = self._build_translation_prompt(
-                        input_map, kwargs["target_lang"]
-                    )
+                    prompt = self._build_translation_prompt(input_map, kwargs["target_lang"])
 
-                    raw_response = await self._call_llm_async(
-                        prompt, api_key, base_url, model, proxy, is_json=True
-                    )
+                    raw_response = await self._call_llm_async(prompt, api_key, base_url, model, proxy, is_json=True)
 
                     # 解析返回的 JSON
                     try:
                         data = json.loads(self._extract_json(raw_response))
                     except json.JSONDecodeError:
-                        raise ValueError(
-                            f"模型未返回有效 JSON: {raw_response[:50]}..."
-                        ) from None
+                        raise ValueError(f"模型未返回有效 JSON: {raw_response[:50]}...") from None
 
                     result_map = data
                     if "translations" in data and isinstance(data["translations"], dict):
@@ -240,9 +226,7 @@ class TranslationService(ITranslationService):
                 # =========================================================
                 else:
                     prompt = self._build_segmentation_prompt(" ".join(source_texts))
-                    raw_response = await self._call_llm_async(
-                        prompt, api_key, base_url, model, proxy, is_json=False
-                    )
+                    raw_response = await self._call_llm_async(prompt, api_key, base_url, model, proxy, is_json=False)
                     processed_text = self._clean_text_response(raw_response)
                     return self._realign_timestamps(chunk, processed_text)
 
@@ -254,9 +238,7 @@ class TranslationService(ITranslationService):
                     logger.warning("触发 API 频率限制 (429)，强制等待 20 秒...")
                     wait_time = DEFAULT_RATE_LIMIT_WAIT_SEC
 
-                logger.warning(
-                    f"[重试 {attempt}/{self.max_retries}] {task_type_str} 失败: {e}. {wait_time}s 后重试..."
-                )
+                logger.warning(f"[重试 {attempt}/{self.max_retries}] {task_type_str} 失败: {e}. {wait_time}s 后重试...")
 
                 if attempt == self.max_retries:
                     logger.error(f"{task_type_str} 分块彻底失败，保全时间轴，返回原文")
@@ -311,9 +293,7 @@ class TranslationService(ITranslationService):
         if not segments:
             return []
         semaphore = asyncio.Semaphore(concurrency)
-        chunks = [
-            segments[i : i + chunk_size] for i in range(0, len(segments), chunk_size)
-        ]
+        chunks = [segments[i : i + chunk_size] for i in range(0, len(segments), chunk_size)]
 
         async def worker(
             c: list[SubtitleSegmentDict] | list[dict[str, Any]],
@@ -370,9 +350,7 @@ class TranslationService(ITranslationService):
         if not segments:
             return []
         semaphore = asyncio.Semaphore(concurrency)
-        chunks = [
-            segments[i : i + chunk_size] for i in range(0, len(segments), chunk_size)
-        ]
+        chunks = [segments[i : i + chunk_size] for i in range(0, len(segments), chunk_size)]
 
         async def worker(
             c: list[SubtitleSegmentDict] | list[dict[str, Any]],
@@ -519,16 +497,12 @@ class TranslationService(ITranslationService):
         orig_str = "".join(str(c["char"]) for c in orig_chars)
         orig_total_start = float(orig_chars[0]["start"])
         orig_total_end = float(orig_chars[-1]["end"])
-        avg_char_dur = max(
-            0.01, (orig_total_end - orig_total_start) / len(orig_chars)
-        )
+        avg_char_dur = max(0.01, (orig_total_end - orig_total_start) / len(orig_chars))
 
         # 针对无断句标记 | 的输入：若与原文相似度极低则判定为无效改写并安全回退；若高相似度则支持整段合并
         if "|" not in llm_text:
             clean_llm_single = re.sub(r"\s+", "", llm_text)
-            sim_ratio = difflib.SequenceMatcher(
-                None, orig_str, clean_llm_single, autojunk=False
-            ).ratio()
+            sim_ratio = difflib.SequenceMatcher(None, orig_str, clean_llm_single, autojunk=False).ratio()
             if sim_ratio < 0.4:
                 return [
                     {
@@ -568,9 +542,7 @@ class TranslationService(ITranslationService):
         llm_len = len(llm_clean_str)
 
         # 3. 基于动态规划（LCS/SequenceMatcher）寻找单调锚点块
-        matcher = difflib.SequenceMatcher(
-            None, orig_str, llm_clean_str, autojunk=False
-        )
+        matcher = difflib.SequenceMatcher(None, orig_str, llm_clean_str, autojunk=False)
         matching_blocks = matcher.get_matching_blocks()
 
         matched_times: dict[int, tuple[float, float]] = {}

@@ -325,9 +325,7 @@ def test_srt_large_dataset_crlf_stress() -> None:
     for idx in range(500):
         start = idx * 2.0
         end = start + 1.8
-        large_segments.append(
-            {"start": start, "end": end, "segment": f"Stress test sentence #{idx}"}
-        )
+        large_segments.append({"start": start, "end": end, "segment": f"Stress test sentence #{idx}"})
 
     # 导出为 CRLF 格式的 SRT
     srt_output = service.generate_content(large_segments, "srt").replace("\n", "\r\n")
@@ -360,9 +358,7 @@ def test_asr_service_high_concurrency_stress(tmp_path: Path) -> None:
             time.sleep(0.01)  # 模拟推理微延时
             mock_hyp = MagicMock()
             mock_hyp.text = "concurrency test passed"
-            mock_hyp.timestamp = {
-                "segment": [{"start": 0.0, "end": 0.5, "segment": "concurrency test passed"}]
-            }
+            mock_hyp.timestamp = {"segment": [{"start": 0.0, "end": 0.5, "segment": "concurrency test passed"}]}
             mock_hyp.words = []
             return [mock_hyp]
 
@@ -492,10 +488,9 @@ def test_audio_service_invalid_and_corrupt_files(tmp_path: Path) -> None:
     assert "失败" in str(exc_corrupt.value) or "FFmpeg" in str(exc_corrupt.value)
 
 
-def test_audio_service_unsupported_format_and_missing_ffmpeg(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
+def test_audio_service_unsupported_format_and_missing_ffmpeg(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     """测试当系统未安装 FFmpeg 时，AudioService 的软检测机制保证启动不闪退，仅在调用提取时抛错。"""
+
     def mock_subprocess_missing(*args: Any, **kwargs: Any) -> Any:
         raise FileNotFoundError("No ffmpeg binary found in PATH")
 
@@ -632,6 +627,7 @@ def test_log_filter_missing_or_corrupt_yaml_fallback(tmp_path: Path) -> None:
 
 def test_safe_stream_handler_closed_stream_and_write_exceptions() -> None:
     """测试 SafeStreamHandler 在遇到底层流已关闭、write 或 flush 抛出 I/O 异常时静默安全吞噬，防止解释器退出崩溃。"""
+
     class ThrowingStream:
         closed = True
 
@@ -678,11 +674,7 @@ def test_dp_alignment_text_expansion_and_filler_words() -> None:
     ]
 
     # LLM 在开头插入了 8 个修饰字：“根据气象预报显示，”
-    llm_output = (
-        "根据气象预报显示，今天的天气非常晴朗 | "
-        "我们决定去海边散步 | "
-        "顺便欣赏美丽的日落"
-    )
+    llm_output = "根据气象预报显示，今天的天气非常晴朗 | 我们决定去海边散步 | 顺便欣赏美丽的日落"
 
     aligned = service.align_timestamps(original_segments, llm_output)
     assert len(aligned) == 3
@@ -767,9 +759,7 @@ def test_dp_alignment_zero_overlap_and_wild_rewrites() -> None:
     """测试极端场景：大模型完全自由改写文本（0 相同字符重合）时的平滑均分保底。"""
     service = TranslationService()
 
-    original_segments: list[SubtitleSegmentDict] = [
-        {"start": 0.0, "end": 10.0, "segment": "1234567890"}
-    ]
+    original_segments: list[SubtitleSegmentDict] = [{"start": 0.0, "end": 10.0, "segment": "1234567890"}]
 
     llm_wild = "Alpha | Beta | Gamma | Delta | Epsilon"
     aligned = service.align_timestamps(original_segments, llm_wild)
@@ -818,17 +808,13 @@ def test_cancellation_token_thread_safe_abort_during_chunks(tmp_path: Path) -> N
                 self.token.cancel()
             mock_hyp = MagicMock()
             mock_hyp.text = f"chunk_{current_count}"
-            mock_hyp.timestamp = {
-                "segment": [{"start": 0.0, "end": 1.0, "segment": f"chunk_{current_count}"}]
-            }
+            mock_hyp.timestamp = {"segment": [{"start": 0.0, "end": 1.0, "segment": f"chunk_{current_count}"}]}
             return [mock_hyp]
 
     cancel_token = CancellationToken()
     asr.model = ChunkCountingModel(cancel_token)
 
-    results = asr.transcribe_audio_in_chunks(
-        wav_path, chunk_length_ms=1000, cancellation_token=cancel_token
-    )
+    results = asr.transcribe_audio_in_chunks(wav_path, chunk_length_ms=1000, cancellation_token=cancel_token)
 
     # 验证：仅执行了 2 个分块，后续第 3-10 个分块全部被协作式取消拦截，0 僵尸计算
     assert len(computed_chunks) == 2, f"期望仅计算 2 块，实际计算了 {len(computed_chunks)} 块"
@@ -849,9 +835,7 @@ def test_cancellation_before_transcription_start(tmp_path: Path) -> None:
     token = CancellationToken()
     token.cancel()
 
-    results = asr.transcribe_audio_in_chunks(
-        wav_path, chunk_length_ms=1000, cancellation_token=token
-    )
+    results = asr.transcribe_audio_in_chunks(wav_path, chunk_length_ms=1000, cancellation_token=token)
 
     assert results == []
     # 模型 transcribe 从未被调用
@@ -872,9 +856,7 @@ def test_transcription_controller_cooperative_cancel(tmp_path: Path) -> None:
     # 预先触发取消
     controller.stop_transcription()
 
-    generator = controller.process_media(
-        [str(tmp_path / "video.mp4")], 60, ["srt"], []
-    )
+    generator = controller.process_media([str(tmp_path / "video.mp4")], 60, ["srt"], [])
     yields = list(generator)
 
     assert len(yields) > 0
@@ -905,9 +887,7 @@ def test_cancellation_token_reset_and_reuse_lifecycle() -> None:
 # =====================================================================
 def test_svg_icons_full_library_conformance() -> None:
     """测试 SVG 图标库全量 16 个图标的 XML 合法性、属性注入及 0-Emoji 保证。"""
-    emoji_regex = re.compile(
-        r"[\U00010000-\U0010ffff\u2600-\u27bf\u2300-\u23ff\u2b50-\u2b55\u200d\ufe0f]"
-    )
+    emoji_regex = re.compile(r"[\U00010000-\U0010ffff\u2600-\u27bf\u2300-\u23ff\u2b50-\u2b55\u200d\ufe0f]")
 
     expected_icons = [
         "settings",
@@ -941,17 +921,13 @@ def test_svg_icons_full_library_conformance() -> None:
         assert not emoji_regex.findall(raw_svg), f"图标 {icon_name} 包含 Emoji!"
 
         # 3. 验证动态着色与尺寸工具函数
-        rendered_custom = get_svg_icon(
-            icon_name, width=24, height=24, color="#00FF00", class_name="test-icon"
-        )
+        rendered_custom = get_svg_icon(icon_name, width=24, height=24, color="#00FF00", class_name="test-icon")
         assert 'width="24"' in rendered_custom
         assert 'height="24"' in rendered_custom
         assert 'class="test-icon"' in rendered_custom
 
     # 4. 验证 HTML 渲染器
-    html_output = render_svg_html(
-        get_svg_icon("play"), "开始转录", gap=10, class_name="btn-label"
-    )
+    html_output = render_svg_html(get_svg_icon("play"), "开始转录", gap=10, class_name="btn-label")
     assert "<span" in html_output
     assert "开始转录" in html_output
     assert "gap: 10px" in html_output
@@ -967,9 +943,7 @@ def test_locales_strict_zero_emoji_and_key_parity() -> None:
         "ko": root_dir / "locales" / "ko.json",
     }
 
-    emoji_regex = re.compile(
-        r"[\U00010000-\U0010ffff\u2600-\u27bf\u2300-\u23ff\u2b50-\u2b55\u200d\ufe0f]"
-    )
+    emoji_regex = re.compile(r"[\U00010000-\U0010ffff\u2600-\u27bf\u2300-\u23ff\u2b50-\u2b55\u200d\ufe0f]")
 
     loaded_locales: dict[str, dict[str, Any]] = {}
 
@@ -991,9 +965,7 @@ def test_locales_strict_zero_emoji_and_key_parity() -> None:
                     target_list.append(f"{path}: {matches}")
 
         check_emoji(data, "", found_emojis)
-        assert (
-            len(found_emojis) == 0
-        ), f"语言文件 {lang_code}.json 违规包含 Emoji: {found_emojis}"
+        assert len(found_emojis) == 0, f"语言文件 {lang_code}.json 违规包含 Emoji: {found_emojis}"
 
     # 验证 Key 对齐度 (以 zh.json 为基准)
     def extract_keys(d: dict[str, Any], prefix: str = "") -> set[str]:
@@ -1012,9 +984,7 @@ def test_locales_strict_zero_emoji_and_key_parity() -> None:
     for target_lang in ["en", "ja", "ko"]:
         target_keys = extract_keys(loaded_locales[target_lang])
         missing = zh_keys - target_keys
-        assert (
-            len(missing) == 0
-        ), f"语言文件 {target_lang}.json 缺失以下键: {missing}"
+        assert len(missing) == 0, f"语言文件 {target_lang}.json 缺失以下键: {missing}"
 
 
 def test_translator_multilingual_locale_switching() -> None:
@@ -1059,9 +1029,7 @@ def test_app_ui_language_switch_event_zero_emoji() -> None:
     from app_ui import create_ui
     from application import AppState
 
-    emoji_regex = re.compile(
-        r"[\U00010000-\U0010ffff\u2600-\u27bf\u2300-\u23ff\u2b50-\u2b55\u200d\ufe0f]"
-    )
+    emoji_regex = re.compile(r"[\U00010000-\U0010ffff\u2600-\u27bf\u2300-\u23ff\u2b50-\u2b55\u200d\ufe0f]")
 
     app = AppState()
     demo = create_ui(app)
@@ -1073,9 +1041,7 @@ def test_app_ui_language_switch_event_zero_emoji() -> None:
         # 扫描此时 Translator 加载的所有翻译文本
         for k, v in t_scan_all(Translator().translations):
             emojis = emoji_regex.findall(v)
-            assert (
-                len(emojis) == 0
-            ), f"在语言 {target_lang} 下键 {k} 含有 Emoji: {emojis}"
+            assert len(emojis) == 0, f"在语言 {target_lang} 下键 {k} 含有 Emoji: {emojis}"
 
     set_language(DEFAULT_LANGUAGE)
 

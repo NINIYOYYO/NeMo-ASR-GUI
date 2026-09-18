@@ -209,10 +209,12 @@ def test_format_time_returns_string_explicitly():
 def test_zero_emoji_in_python_source_and_docstrings():
     """验证核心代码与 Docstring 中无任何 Unicode Emoji。"""
     root_dir = Path(__file__).resolve().parent.parent
-    py_files = list(root_dir.glob("core/**/*.py")) + \
-               list(root_dir.glob("controllers/**/*.py")) + \
-               list(root_dir.glob("utils/**/*.py")) + \
-               [root_dir / "application.py", root_dir / "app_ui.py", root_dir / "interfaces.py", root_dir / "main.py"]
+    py_files = (
+        list(root_dir.glob("core/**/*.py"))
+        + list(root_dir.glob("controllers/**/*.py"))
+        + list(root_dir.glob("utils/**/*.py"))
+        + [root_dir / "application.py", root_dir / "app_ui.py", root_dir / "interfaces.py", root_dir / "main.py"]
+    )
 
     # 常见 Emoji 范围
     emoji_ranges = [
@@ -225,8 +227,8 @@ def test_zero_emoji_in_python_source_and_docstrings():
         (0x1F900, 0x1F9FF),  # Supplemental Symbols and Pictographs
         (0x1FA00, 0x1FA6F),  # Chess Symbols
         (0x1FA70, 0x1FAFF),  # Symbols and Pictographs Extended-A
-        (0x2600, 0x26FF),    # Misc Symbols
-        (0x2700, 0x27BF),    # Dingbats
+        (0x2600, 0x26FF),  # Misc Symbols
+        (0x2700, 0x27BF),  # Dingbats
     ]
 
     def has_emoji(text: str) -> bool:
@@ -268,11 +270,15 @@ def test_all_classes_and_public_functions_have_google_docstrings():
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
                 doc = ast.get_docstring(node)
                 # 检查文档注释存在
-                assert (
-                    doc is not None and len(doc.strip()) > 0
-                ), f"文件 {py_file.name} 中 {node.name} 缺少 Docstring 文档注释"
+                assert doc is not None and len(doc.strip()) > 0, (
+                    f"文件 {py_file.name} 中 {node.name} 缺少 Docstring 文档注释"
+                )
 
                 # 检查 Google 风格标签大小写规范 (不能是全大写 ARGS: / RETURNS: / YIELDS:)
                 assert "ARGS:" not in doc, f"文件 {py_file.name} 中 {node.name} 使用了非标准大写 'ARGS:'，应为 'Args:'"
-                assert "RETURNS:" not in doc, f"文件 {py_file.name} 中 {node.name} 使用了非标准大写 'RETURNS:'，应为 'Returns:'"
-                assert "YIELDS:" not in doc, f"文件 {py_file.name} 中 {node.name} 使用了非标准大写 'YIELDS:'，应为 'Yields:'"
+                assert "RETURNS:" not in doc, (
+                    f"文件 {py_file.name} 中 {node.name} 使用了非标准大写 'RETURNS:'，应为 'Returns:'"
+                )
+                assert "YIELDS:" not in doc, (
+                    f"文件 {py_file.name} 中 {node.name} 使用了非标准大写 'YIELDS:'，应为 'Yields:'"
+                )

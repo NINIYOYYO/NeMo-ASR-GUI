@@ -41,9 +41,7 @@ class AudioService(IAudioService):
             )
             return True
         except (subprocess.CalledProcessError, FileNotFoundError):
-            logger.warning(
-                "警告：ffmpeg 未检测到或未正确安装。请安装 ffmpeg 并确保其在系统 PATH 中。"
-            )
+            logger.warning("警告：ffmpeg 未检测到或未正确安装。请安装 ffmpeg 并确保其在系统 PATH 中。")
             if raise_error:
                 raise AudioProcessingError("FFmpeg 未安装或不可用。") from None
             return False

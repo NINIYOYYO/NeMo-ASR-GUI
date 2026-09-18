@@ -41,7 +41,7 @@ class ModelController(IModelController):
         """
         try:
             if not path_from_input_box or not path_from_input_box.strip():
-                return "错误：请输入有效的本地模型路径后点击\"加载本地模型\"。若要加载云端模型，请使用对应按钮。"
+                return '错误：请输入有效的本地模型路径后点击"加载本地模型"。若要加载云端模型，请使用对应按钮。'
             status = self.services.load_model_from_local(path_from_input_box)
             if self.services.is_model_loaded:
                 self.config.save_config(

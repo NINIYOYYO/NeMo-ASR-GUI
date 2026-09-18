@@ -16,7 +16,7 @@ from pydub import AudioSegment
 try:
     import nemo.collections.asr as nemo_asr
 except Exception:
-    nemo_asr = None  # type: ignore[assignment]
+    nemo_asr = None
 
 from core.constants import (
     AUDIO_NORM_FACTOR,
@@ -149,9 +149,7 @@ class ASRService(IASRService):
             # 释放当前模型占用的显存和内存
             self._release_memory()
             try:
-                self.model = nemo_asr.models.ASRModel.from_pretrained(
-                    model_name=model_name, map_location=self.device
-                )
+                self.model = nemo_asr.models.ASRModel.from_pretrained(model_name=model_name, map_location=self.device)
                 # 加载成功后，更新策略
                 self._update_strategy(model_name)
                 return f"云端模型 '{model_name}' 加载成功。"
@@ -180,9 +178,7 @@ class ASRService(IASRService):
 
             logger.info(f"尝试从本地路径加载模型: {actual_path}...")
             try:
-                self.model = nemo_asr.models.ASRModel.restore_from(
-                    restore_path=actual_path, map_location=self.device
-                )
+                self.model = nemo_asr.models.ASRModel.restore_from(restore_path=actual_path, map_location=self.device)
                 model_name = os.path.basename(actual_path)
                 # 加载成功后，更新策略
                 self._update_strategy(model_name)
@@ -222,9 +218,7 @@ class ASRService(IASRService):
             logger.info(f"正在加载音频文件 '{audio_path}' 进行分块处理...")
             try:
                 audio = AudioSegment.from_wav(audio_path)
-                audio = audio.set_frame_rate(DEFAULT_SAMPLE_RATE).set_channels(
-                    DEFAULT_AUDIO_CHANNELS
-                )
+                audio = audio.set_frame_rate(DEFAULT_SAMPLE_RATE).set_channels(DEFAULT_AUDIO_CHANNELS)
             except Exception as e:
                 logger.error(f"加载或处理音频文件 '{audio_path}' 时发生错误 (pydub): {e}")
                 return []
@@ -242,9 +236,7 @@ class ASRService(IASRService):
                 end_time_ms = min(i + chunk_length_ms, audio_duration_ms)
                 chunk = audio[start_time_ms:end_time_ms]
 
-                logger.info(
-                    f"处理音频块: {start_time_ms / MS_PER_SECOND:.2f}s - {end_time_ms / MS_PER_SECOND:.2f}s"
-                )
+                logger.info(f"处理音频块: {start_time_ms / MS_PER_SECOND:.2f}s - {end_time_ms / MS_PER_SECOND:.2f}s")
 
                 chunk_output_list = None
                 temp_chunk_file_path = ""
@@ -252,10 +244,7 @@ class ASRService(IASRService):
                     # 1. 优先尝试内存张量直传推理（避免磁盘 I/O 抖动）
                     try:
                         raw_samples = (
-                            np.frombuffer(chunk.raw_data, dtype=np.int16).astype(
-                                np.float32
-                            )
-                            / AUDIO_NORM_FACTOR
+                            np.frombuffer(chunk.raw_data, dtype=np.int16).astype(np.float32) / AUDIO_NORM_FACTOR
                         )
                         chunk_tensor = torch.from_numpy(raw_samples)
                         chunk_output_list = self.model.transcribe(
@@ -270,16 +259,12 @@ class ASRService(IASRService):
                         NotImplementedError,
                         Exception,
                     ) as in_memory_err:
-                        logger.debug(
-                            f"内存张量直传推理未被底层模型支持 ({in_memory_err})，降级为临时磁盘 WAV 模式。"
-                        )
+                        logger.debug(f"内存张量直传推理未被底层模型支持 ({in_memory_err})，降级为临时磁盘 WAV 模式。")
                         chunk_output_list = None
 
                     # 2. 降级方案：若内存直传不可用或异常，使用临时 WAV 文件
                     if chunk_output_list is None:
-                        with tempfile.NamedTemporaryFile(
-                            suffix=".wav", delete=False
-                        ) as temp_chunk_file:
+                        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temp_chunk_file:
                             temp_chunk_file_path = temp_chunk_file.name
                         chunk.export(temp_chunk_file_path, format="wav")
 
@@ -311,9 +296,7 @@ class ASRService(IASRService):
                         try:
                             os.remove(temp_chunk_file_path)
                         except OSError as e_os:
-                            logger.error(
-                                f"删除临时音频文件 '{temp_chunk_file_path}' 时发生OS错误: {e_os}"
-                            )
+                            logger.error(f"删除临时音频文件 '{temp_chunk_file_path}' 时发生OS错误: {e_os}")
 
             all_results.sort(key=lambda x: float(x.get("start", 0.0)))
             return all_results

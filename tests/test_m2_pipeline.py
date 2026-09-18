@@ -8,6 +8,7 @@
 5. 协作式 CancellationToken 取消机制在 ASRService 与 Controller 中的响应。
 6. TranslationController 异步非阻塞 (asyncio.to_thread) 文件 I/O。
 """
+
 import os
 from typing import Any
 from unittest.mock import MagicMock
@@ -33,14 +34,7 @@ def test_srt_crlf_and_lf_parsing_and_formatting():
     service = SubtitleService()
 
     # 1.1 Unix LF SRT
-    lf_srt = (
-        "1\n"
-        "00:00:01,000 --> 00:00:03,500\n"
-        "Hello Unix World\n\n"
-        "2\n"
-        "00:00:04,000 --> 00:00:06,250\n"
-        "Line 2 Text\n\n"
-    )
+    lf_srt = "1\n00:00:01,000 --> 00:00:03,500\nHello Unix World\n\n2\n00:00:04,000 --> 00:00:06,250\nLine 2 Text\n\n"
     lf_segments = service.parse_srt(lf_srt)
     assert len(lf_segments) == 2
     assert lf_segments[0]["segment"] == "Hello Unix World"
@@ -134,9 +128,7 @@ def test_in_memory_tensor_inference_path(tmp_path):
             self.calls.append({"paths": paths2audio_files, "audio": audio, "kwargs": kwargs})
             mock_hyp = MagicMock()
             mock_hyp.text = "tensor transcribed text"
-            mock_hyp.timestamp = {
-                "segment": [{"start": 0.0, "end": 1.0, "segment": "tensor transcribed text"}]
-            }
+            mock_hyp.timestamp = {"segment": [{"start": 0.0, "end": 1.0, "segment": "tensor transcribed text"}]}
             mock_hyp.words = []
             return [mock_hyp]
 
@@ -162,9 +154,7 @@ def test_in_memory_tensor_inference_path(tmp_path):
             self.calls.append({"paths": paths2audio_files, "kwargs": kwargs})
             mock_hyp = MagicMock()
             mock_hyp.text = "disk fallback text"
-            mock_hyp.timestamp = {
-                "segment": [{"start": 0.0, "end": 1.0, "segment": "disk fallback text"}]
-            }
+            mock_hyp.timestamp = {"segment": [{"start": 0.0, "end": 1.0, "segment": "disk fallback text"}]}
             mock_hyp.words = []
             return [mock_hyp]
 
@@ -205,9 +195,7 @@ def test_dp_anchor_timestamp_alignment_resilience():
     # 传统字符计数法会导致第二句起始时间严重向后漂移 ~1-2 秒
     # DP 锚点对齐法应精准识别第二句的锚点词，将其锚定在 ~2.0s
     llm_with_added_words = (
-        "最新研发的高精度通用人工智能与深度学习核心算法 | "
-        "正在彻底改变计算机视觉 | "
-        "以及自然语言处理领域"
+        "最新研发的高精度通用人工智能与深度学习核心算法 | 正在彻底改变计算机视觉 | 以及自然语言处理领域"
     )
     aligned_2 = service.align_timestamps(original_segments, llm_with_added_words)
     assert len(aligned_2) == 3
@@ -258,15 +246,7 @@ async def test_gemini_api_key_passed_in_header_not_query_url():
         ).mock(
             return_value=Response(
                 200,
-                json={
-                    "candidates": [
-                        {
-                            "content": {
-                                "parts": [{"text": '{"0": "你好世界"}'}]
-                            }
-                        }
-                    ]
-                },
+                json={"candidates": [{"content": {"parts": [{"text": '{"0": "你好世界"}'}]}}]},
             )
         )
 
@@ -338,9 +318,7 @@ def test_asr_service_cancellation_interruption(tmp_path):
     # 在处理第 1 个 chunk 后设置取消
     token.cancel()
 
-    results = asr.transcribe_audio_in_chunks(
-        wav_path, chunk_length_ms=1000, cancellation_token=token
-    )
+    results = asr.transcribe_audio_in_chunks(wav_path, chunk_length_ms=1000, cancellation_token=token)
     # 因为循环一开始就检测到 cancelled，因此处理 0 个 chunk
     assert len(results) == 0
     assert len(processed_chunks) == 0
@@ -364,9 +342,7 @@ def test_transcription_controller_cancellation_integration(tmp_path):
     assert controller.cancellation_token.is_cancelled
 
     # 执行 process_media，在开始处理前即退出
-    generator = controller.process_media(
-        [str(tmp_path / "test.mp4")], 60, ["srt"], []
-    )
+    generator = controller.process_media([str(tmp_path / "test.mp4")], 60, ["srt"], [])
     messages = list(generator)
     assert len(messages) > 0
     # 状态提示包含取消信息

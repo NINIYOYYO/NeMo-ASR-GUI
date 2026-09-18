@@ -66,14 +66,10 @@ class TranslationController(ITranslationController):
         self.subtitle_service: ISubtitleGenerator = subtitle_service
         self.translation_service: ITranslationService = translation_service
         self.config: IConfigManager = config_manager
-        self.output_dir: Path = (
-            Path(__file__).resolve().parent.parent / "subtitles" / "translated"
-        )
+        self.output_dir: Path = Path(__file__).resolve().parent.parent / "subtitles" / "translated"
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
-    def _save_llm_config(
-        self, api_key: str, base_url: str, model_name: str, proxy: str | None
-    ) -> None:
+    def _save_llm_config(self, api_key: str, base_url: str, model_name: str, proxy: str | None) -> None:
         """保存 API 相关配置。
 
         Args:
@@ -82,9 +78,7 @@ class TranslationController(ITranslationController):
             model_name (str): 模型名称。
             proxy (str | None): 可选代理地址。
         """
-        self.config.save_config(
-            api_key=api_key, base_url=base_url, llm_model=model_name, proxy=proxy
-        )
+        self.config.save_config(api_key=api_key, base_url=base_url, llm_model=model_name, proxy=proxy)
 
     async def handle_translation(
         self,
@@ -124,9 +118,7 @@ class TranslationController(ITranslationController):
 
         for file_obj in file_objs:
             try:
-                file_path = (
-                    file_obj.name if hasattr(file_obj, "name") else str(file_obj)
-                )
+                file_path = file_obj.name if hasattr(file_obj, "name") else str(file_obj)
 
                 # 1. 异步非阻塞读取原始字幕
                 content = await asyncio.to_thread(_read_file_text_sync, file_path)
@@ -146,17 +138,13 @@ class TranslationController(ITranslationController):
                 )
 
                 # 3. 生成新字幕文件
-                translated_content = self.subtitle_service.generate_content(
-                    translated_segments, "srt"
-                )
+                translated_content = self.subtitle_service.generate_content(translated_segments, "srt")
 
                 original_name = os.path.basename(file_path)
                 save_path = self.output_dir / f"{target_lang}_{original_name}"
 
                 # 4. 异步非阻塞写入新字幕文件
-                await asyncio.to_thread(
-                    _write_file_text_sync, str(save_path), translated_content
-                )
+                await asyncio.to_thread(_write_file_text_sync, str(save_path), translated_content)
 
                 translated_files.append(str(save_path))
                 last_preview = translated_content
@@ -203,9 +191,7 @@ class TranslationController(ITranslationController):
 
         for file_obj in file_objs:
             try:
-                file_path = (
-                    file_obj.name if hasattr(file_obj, "name") else str(file_obj)
-                )
+                file_path = file_obj.name if hasattr(file_obj, "name") else str(file_obj)
 
                 # 1. 异步非阻塞读取原始字幕
                 content = await asyncio.to_thread(_read_file_text_sync, file_path)

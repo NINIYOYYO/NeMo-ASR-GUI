@@ -60,9 +60,7 @@ class ConfigurableFilter(logging.Filter):
                 if not pattern_str:
                     continue
                 pattern = re.compile(pattern_str)
-                level_name = str(
-                    filter_rule.get("min_level") or filter_rule.get("level", "DEBUG")
-                )
+                level_name = str(filter_rule.get("min_level") or filter_rule.get("level", "DEBUG"))
                 min_level = getattr(logging, level_name.upper(), logging.DEBUG)
                 self.message_patterns.append(
                     {
@@ -100,11 +98,7 @@ def apply_third_party_filters(config_path: str | None = None) -> None:
     Args:
         config_path (str | None): 日志过滤 YAML 配置文件路径，为 None 时使用默认路径。
     """
-    path = (
-        Path(config_path)
-        if config_path
-        else Path(__file__).parent.parent / "logging_filter_config.yaml"
-    )
+    path = Path(config_path) if config_path else Path(__file__).parent.parent / "logging_filter_config.yaml"
 
     try:
         with open(path, "r", encoding="utf-8") as f:

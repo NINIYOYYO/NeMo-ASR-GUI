@@ -69,18 +69,12 @@ def create_ui(app: IApplication) -> gr.Blocks:
         try:
             if saved_model_path == "":  # NGC 模型
                 logger.info(t("model.loading_cloud", model_name=saved_cloud_model))
-                initial_model_status = app.asr_service.load_model_from_ngc(
-                    saved_cloud_model
-                )
+                initial_model_status = app.asr_service.load_model_from_ngc(saved_cloud_model)
             elif os.path.exists(saved_model_path):  # 本地模型存在
                 logger.info(t("model.loading_local", path=saved_model_path))
-                initial_model_status = app.asr_service.load_model_from_local(
-                    saved_model_path
-                )
+                initial_model_status = app.asr_service.load_model_from_local(saved_model_path)
             else:
-                initial_model_status = t(
-                    "model.error_path_not_found", path=saved_model_path
-                )
+                initial_model_status = t("model.error_path_not_found", path=saved_model_path)
         except Exception as e:
             logger.error(f"启动时自动加载模型失败: {e}")
             initial_model_status = f"自动加载模型失败: {e}"
@@ -102,9 +96,7 @@ def create_ui(app: IApplication) -> gr.Blocks:
             app_description: gr.update(value=t("app.description")),
             model_settings_title: gr.update(label=t("model.settings_title")),
             model_cloud_section_title: gr.update(value=t("model.cloud_section_title")),
-            cloud_model_dropdown: gr.update(
-                label=t("model.cloud_model_label"), info=t("model.cloud_model_info")
-            ),
+            cloud_model_dropdown: gr.update(label=t("model.cloud_model_label"), info=t("model.cloud_model_info")),
             model_description: gr.update(label=t("model.model_description_label")),
             load_cloud_model_button: gr.update(value=t("model.load_cloud_button")),
             model_local_section_title: gr.update(value=t("model.local_section_title")),
@@ -114,9 +106,7 @@ def create_ui(app: IApplication) -> gr.Blocks:
             ),
             load_local_model_button: gr.update(value=t("model.load_local_button")),
             model_status_output: gr.update(label=t("model.status_label")),
-            chunk_slider: gr.update(
-                label=t("model.chunk_length_label"), info=t("model.chunk_length_info")
-            ),
+            chunk_slider: gr.update(label=t("model.chunk_length_label"), info=t("model.chunk_length_info")),
             transcription_tab: gr.update(label=t("transcription.tab_title")),
             format_checkboxes: gr.update(label=t("transcription.format_label")),
             video_input: gr.update(label=t("transcription.upload_label")),
@@ -157,12 +147,8 @@ def create_ui(app: IApplication) -> gr.Blocks:
             trans_api_key_input: gr.update(label=t("llm.api_key_label")),
             trans_base_url_input: gr.update(label=t("llm.base_url_label")),
             trans_model_name_input: gr.update(label=t("llm.model_name_label")),
-            trans_proxy_input: gr.update(
-                label=t("llm.proxy_label"), placeholder=t("llm.proxy_placeholder")
-            ),
-            trans_concurrency_slider: gr.update(
-                label=t("llm.concurrency_label"), info=t("llm.concurrency_info")
-            ),
+            trans_proxy_input: gr.update(label=t("llm.proxy_label"), placeholder=t("llm.proxy_placeholder")),
+            trans_concurrency_slider: gr.update(label=t("llm.concurrency_label"), info=t("llm.concurrency_info")),
             trans_chunk_size_slider: gr.update(
                 label=t("translation.chunk_size_label"), info=t("translation.chunk_size_info")
             ),
@@ -181,12 +167,8 @@ def create_ui(app: IApplication) -> gr.Blocks:
             seg_api_key_input: gr.update(label=t("llm.api_key_label")),
             seg_base_url_input: gr.update(label=t("llm.base_url_label")),
             seg_model_name_input: gr.update(label=t("llm.model_name_label")),
-            seg_proxy_input: gr.update(
-                label=t("llm.proxy_label"), placeholder=t("llm.proxy_placeholder")
-            ),
-            seg_concurrency_slider: gr.update(
-                label=t("llm.concurrency_label"), info=t("llm.concurrency_info")
-            ),
+            seg_proxy_input: gr.update(label=t("llm.proxy_label"), placeholder=t("llm.proxy_placeholder")),
+            seg_concurrency_slider: gr.update(label=t("llm.concurrency_label"), info=t("llm.concurrency_info")),
             seg_chunk_size_slider: gr.update(
                 label=t("segmentation.chunk_size_label"), info=t("segmentation.chunk_info")
             ),
@@ -197,13 +179,9 @@ def create_ui(app: IApplication) -> gr.Blocks:
             ui_warning_cpu_md: gr.update(value=t("ui.warning_cpu")),
             ui_info_gpu_available_md: gr.update(value=t("ui.info_gpu_available")),
             ui_warning_no_gpu_md: gr.update(value=t("ui.warning_no_gpu")),
-            word_format_checkboxes: gr.update(
-                label=t("output.word_level_label"), info=t("output.word_level_info")
-            ),
+            word_format_checkboxes: gr.update(label=t("output.word_level_label"), info=t("output.word_level_info")),
             enable_split_checkbox: gr.update(label=t("output.enable_split_label")),
-            max_line_width_slider: gr.update(
-                label=t("output.max_width_label"), info=t("output.max_width_info")
-            ),
+            max_line_width_slider: gr.update(label=t("output.max_width_label"), info=t("output.max_width_info")),
             output_config_accordion: gr.update(label=t("output.accordion_title")),
             tab_format: gr.update(label=t("output.tab_format")),
             tab_word_level: gr.update(label=t("output.tab_word_level")),
@@ -264,9 +242,7 @@ def create_ui(app: IApplication) -> gr.Blocks:
                 outputs=[model_description],
             )
 
-            load_cloud_model_button = gr.Button(
-                t("model.load_cloud_button"), variant="primary", size="lg"
-            )
+            load_cloud_model_button = gr.Button(t("model.load_cloud_button"), variant="primary", size="lg")
 
             gr.Markdown("---")
             model_local_section_title = gr.Markdown(t("model.local_section_title"))
@@ -279,9 +255,7 @@ def create_ui(app: IApplication) -> gr.Blocks:
                         value=saved_model_path if saved_model_path is not None else "",
                     )
                 with gr.Column(scale=1, min_width=150):
-                    load_local_model_button = gr.Button(
-                        t("model.load_local_button"), variant="secondary"
-                    )
+                    load_local_model_button = gr.Button(t("model.load_local_button"), variant="secondary")
 
             model_status_output = gr.Textbox(
                 label=t("model.status_label"),
@@ -309,10 +283,7 @@ def create_ui(app: IApplication) -> gr.Blocks:
             )
 
             # --- 输出配置区域---
-            with gr.Accordion(
-                t("output.accordion_title"), open=True
-            ) as output_config_accordion:
-
+            with gr.Accordion(t("output.accordion_title"), open=True) as output_config_accordion:
                 # --- Tab 1: 基础格式 ---
                 with gr.Tab(t("output.tab_format")) as tab_format:
                     format_checkboxes = gr.CheckboxGroup(
@@ -333,9 +304,7 @@ def create_ui(app: IApplication) -> gr.Blocks:
 
                 # --- Tab 3: 长度限制 ---
                 with gr.Tab(t("output.tab_split")) as tab_split:
-                    enable_split_checkbox = gr.Checkbox(
-                        label=t("output.enable_split_label"), value=False
-                    )
+                    enable_split_checkbox = gr.Checkbox(label=t("output.enable_split_label"), value=False)
 
                     max_line_width_slider = gr.Slider(
                         minimum=MAX_LINE_WIDTH_MIN,
@@ -354,25 +323,17 @@ def create_ui(app: IApplication) -> gr.Blocks:
                     )
                     diarization_dev_msg = gr.Markdown(t("diarization.development_msg"))
 
-            media_submit_button = gr.Button(
-                t("transcription.submit_button"), variant="primary", size="lg"
-            )
+            media_submit_button = gr.Button(t("transcription.submit_button"), variant="primary", size="lg")
 
-            status_output = gr.Textbox(
-                label=t("transcription.status_label"), lines=1, interactive=False
-            )
-            with gr.Accordion(
-                t("transcription.result_title"), open=True
-            ) as subtitle_result_accordion:
+            status_output = gr.Textbox(label=t("transcription.status_label"), lines=1, interactive=False)
+            with gr.Accordion(t("transcription.result_title"), open=True) as subtitle_result_accordion:
                 subtitle_file_output = gr.File(
                     label=t("transcription.download_label"),
                     interactive=False,
                     file_count="multiple",
                 )
 
-                subtitle_zip_download_button = gr.Button(
-                    t("transcription.zip_button"), variant="secondary"
-                )
+                subtitle_zip_download_button = gr.Button(t("transcription.zip_button"), variant="secondary")
 
                 subtitle_zip_output = gr.File(
                     label="ZIP Archive",
@@ -397,16 +358,13 @@ def create_ui(app: IApplication) -> gr.Blocks:
 
         # --- 字幕编辑 Tab ---
         with gr.Tab(t("editing.tab_title")) as subtitle_editing_tab:
-            subtitle_to_edit_input = gr.File(
-                label=t("editing.upload_label"), file_count="multiple"
-            )
+            subtitle_to_edit_input = gr.File(label=t("editing.upload_label"), file_count="multiple")
 
             saved_corrections = app.subtitle_editor_controller.load_corrections()
 
             correction_table = gr.Dataframe(
                 headers=[t("editing.table_header_error"), t("editing.table_header_correct")],
                 datatype=["str", "str"],
-                col_count=(2, "fixed"),
                 value=saved_corrections,
                 interactive=True,
                 label=t("editing.correction_table_label"),
@@ -427,7 +385,6 @@ def create_ui(app: IApplication) -> gr.Blocks:
                     t("editing.col_text"),
                 ],
                 datatype=["number", "str", "str", "str"],
-                col_count=(4, "fixed"),
                 interactive=True,
                 wrap=True,
                 label=t("editing.data_label"),
@@ -435,9 +392,7 @@ def create_ui(app: IApplication) -> gr.Blocks:
 
             save_edit_button = gr.Button(t("editing.save_subtitle_btn"), variant="primary")
 
-            edited_file_output = gr.File(
-                label=t("editing.download_label"), interactive=False
-            )
+            edited_file_output = gr.File(label=t("editing.download_label"), interactive=False)
 
             # --- 字幕编辑逻辑 ---
             def on_file_upload(files: list[Any]) -> list[list[Any]] | None:
@@ -451,9 +406,7 @@ def create_ui(app: IApplication) -> gr.Blocks:
                 """
                 if not files:
                     return None
-                df_data, _status = app.subtitle_editor_controller.load_subtitle_file(
-                    files
-                )
+                df_data, _status = app.subtitle_editor_controller.load_subtitle_file(files)
                 return df_data
 
             subtitle_to_edit_input.change(
@@ -482,9 +435,7 @@ def create_ui(app: IApplication) -> gr.Blocks:
 
         # AI 翻译 Tab
         with gr.Tab(t("translation.tab_title")) as translation_tab:
-            trans_subtitle_input = gr.File(
-                label=t("translation.upload_label"), file_count="multiple"
-            )
+            trans_subtitle_input = gr.File(label=t("translation.upload_label"), file_count="multiple")
 
             with gr.Accordion(t("llm.api_accordion"), open=True) as trans_api_accordion:
                 with gr.Row():
@@ -494,13 +445,9 @@ def create_ui(app: IApplication) -> gr.Blocks:
                         placeholder="sk-...",
                         value=saved_api_key,
                     )
-                    trans_base_url_input = gr.Textbox(
-                        label=t("llm.base_url_label"), value=saved_base_url
-                    )
+                    trans_base_url_input = gr.Textbox(label=t("llm.base_url_label"), value=saved_base_url)
                 with gr.Row():
-                    trans_model_name_input = gr.Textbox(
-                        label=t("llm.model_name_label"), value=saved_llm_model
-                    )
+                    trans_model_name_input = gr.Textbox(label=t("llm.model_name_label"), value=saved_llm_model)
                     trans_proxy_input = gr.Textbox(
                         label=t("llm.proxy_label"),
                         placeholder=t("llm.proxy_placeholder"),
@@ -536,21 +483,15 @@ def create_ui(app: IApplication) -> gr.Blocks:
                         value="Chinese",
                         label=t("translation.target_lang_label"),
                     )
-                    double_language_checkbox = gr.Checkbox(
-                        label=t("translation.bilingual_label"), value=True
-                    )
+                    double_language_checkbox = gr.Checkbox(label=t("translation.bilingual_label"), value=True)
 
-            translation_button = gr.Button(
-                t("translation.start_button"), variant="primary", size="lg"
-            )
+            translation_button = gr.Button(t("translation.start_button"), variant="primary", size="lg")
 
             trans_status_msg = gr.Textbox(label=t("translation.status_label"), interactive=False)
             translation_file_output = gr.File(
                 label=t("translation.download_label"), interactive=False, file_count="multiple"
             )
-            translation_preview = gr.Textbox(
-                label=t("translation.preview_label"), lines=10, interactive=False
-            )
+            translation_preview = gr.Textbox(label=t("translation.preview_label"), lines=10, interactive=False)
 
             # 事件绑定
             translation_button.click(
@@ -584,13 +525,9 @@ def create_ui(app: IApplication) -> gr.Blocks:
                         placeholder="sk-...",
                         value=saved_api_key,
                     )
-                    seg_base_url_input = gr.Textbox(
-                        label=t("llm.base_url_label"), value=saved_base_url
-                    )
+                    seg_base_url_input = gr.Textbox(label=t("llm.base_url_label"), value=saved_base_url)
                 with gr.Row():
-                    seg_model_name_input = gr.Textbox(
-                        label=t("llm.model_name_label"), value=saved_llm_model
-                    )
+                    seg_model_name_input = gr.Textbox(label=t("llm.model_name_label"), value=saved_llm_model)
                     seg_proxy_input = gr.Textbox(
                         label=t("llm.proxy_label"),
                         placeholder=t("llm.proxy_placeholder"),
@@ -669,9 +606,7 @@ def create_ui(app: IApplication) -> gr.Blocks:
         if device and hasattr(device, "type") and device.type == "cpu":
             ui_warning_cpu_md = gr.Markdown(t("ui.warning_cpu"), visible=True)
         elif device and torch.cuda.is_available():
-            ui_info_gpu_available_md = gr.Markdown(
-                t("ui.info_gpu_available"), visible=True
-            )
+            ui_info_gpu_available_md = gr.Markdown(t("ui.info_gpu_available"), visible=True)
         else:
             ui_warning_no_gpu_md = gr.Markdown(t("ui.warning_no_gpu"), visible=True)
 

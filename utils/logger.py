@@ -118,9 +118,7 @@ def _initialize_logging_system() -> None:
         backupCount=DEFAULT_LOG_BACKUP_COUNT,
         encoding="utf-8",
     )
-    file_formatter = logging.Formatter(
-        "%(asctime)s - %(filename)-18s:%(lineno)4d - %(levelname)s - %(message)s"
-    )
+    file_formatter = logging.Formatter("%(asctime)s - %(filename)-18s:%(lineno)4d - %(levelname)s - %(message)s")
     file_handler.setFormatter(file_formatter)
     file_handler.setLevel(logging.DEBUG)
 
@@ -140,9 +138,7 @@ def _initialize_logging_system() -> None:
         console_handler.addFilter(_create_default_filter())
 
     # 3. 创建 QueueListener 消费后台日志
-    _listener = logging.handlers.QueueListener(
-        log_queue, file_handler, console_handler, respect_handler_level=True
-    )
+    _listener = logging.handlers.QueueListener(log_queue, file_handler, console_handler, respect_handler_level=True)
     _listener.start()
 
     # 4. 配置根记录器使用 QueueHandler

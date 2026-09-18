@@ -7,6 +7,7 @@ GPU、NeMo 或完整依赖环境即可运行（CI 友好）。
 注意：仅在真实依赖 **未安装** 时才注入桩；本机已安装真实依赖时
 使用真实模块，并通过钩子保持测试断言兼容。
 """
+
 import importlib.util
 import sys
 import types
@@ -126,6 +127,7 @@ if not _missing("gradio"):
             if hasattr(cls, event_name):
                 orig_method = getattr(cls, event_name)
                 if callable(orig_method) and not getattr(orig_method, "_is_gr_patched", False):
+
                     def _make_wrapped(m):
                         def _wrapped(self, fn=None, inputs=None, outputs=None, **kwargs):
                             if fn is not None and fn != "decorator":
@@ -133,14 +135,18 @@ if not _missing("gradio"):
                             res = m(self, fn=fn, inputs=inputs, outputs=outputs, **kwargs)
                             if hasattr(res, "then"):
                                 orig_then = res.then
+
                                 def _wrapped_then(fn=None, inputs=None, outputs=None, **k):
                                     if fn is not None and fn != "decorator":
                                         GR_BOUND.append((fn, inputs, outputs))
                                     return orig_then(fn=fn, inputs=inputs, outputs=outputs, **k)
+
                                 res.then = _wrapped_then
                             return res
+
                         _wrapped._is_gr_patched = True
                         return _wrapped
+
                     setattr(cls, event_name, _make_wrapped(orig_method))
 
     for name in dir(gr):
@@ -171,9 +177,21 @@ else:
             return self
 
     for _name in [
-        "Blocks", "Markdown", "Dropdown", "Textbox", "Button", "Slider", "Tab",
-        "Row", "Column", "Accordion", "File", "CheckboxGroup", "Checkbox",
-        "Dataframe", "Info",
+        "Blocks",
+        "Markdown",
+        "Dropdown",
+        "Textbox",
+        "Button",
+        "Slider",
+        "Tab",
+        "Row",
+        "Column",
+        "Accordion",
+        "File",
+        "CheckboxGroup",
+        "Checkbox",
+        "Dataframe",
+        "Info",
     ]:
         setattr(gr, _name, type(_name, (_Comp,), {}))
     gr.themes = types.SimpleNamespace(Soft=lambda: None)  # type: ignore[attr-defined]

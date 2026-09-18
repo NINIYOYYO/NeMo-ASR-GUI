@@ -48,16 +48,11 @@ class SubtitleEditorController(ISubtitleEditorController):
             return data.to_numpy().tolist()
         if hasattr(data, "__iter__"):
             return [
-                list(row)
-                if hasattr(row, "__iter__") and not isinstance(row, (str, bytes))
-                else row
-                for row in data
+                list(row) if hasattr(row, "__iter__") and not isinstance(row, (str, bytes)) else row for row in data
             ]
         return []
 
-    def load_subtitle_file(
-        self, file_objs: list[Any]
-    ) -> tuple[list[list[Any]] | None, str]:
+    def load_subtitle_file(self, file_objs: list[Any]) -> tuple[list[list[Any]] | None, str]:
         """加载字幕文件并解析为表格展示数据。
 
         Args:
@@ -91,9 +86,7 @@ class SubtitleEditorController(ISubtitleEditorController):
             logger.error(f"解析字幕失败: {e}")
             return None, f"解析失败: {e}"
 
-    def apply_batch_corrections(
-        self, subtitle_data: Any, correction_table: Any
-    ) -> list[list[Any]]:
+    def apply_batch_corrections(self, subtitle_data: Any, correction_table: Any) -> list[list[Any]]:
         """应用校对本中的批量替换逻辑。
 
         Args:
@@ -166,14 +159,10 @@ class SubtitleEditorController(ISubtitleEditorController):
             # 获取原始文件名
             if isinstance(original_file_obj, list) and original_file_obj:
                 first_item = original_file_obj[0]
-                original_name = os.path.basename(
-                    first_item.name if hasattr(first_item, "name") else str(first_item)
-                )
+                original_name = os.path.basename(first_item.name if hasattr(first_item, "name") else str(first_item))
             elif original_file_obj is not None:
                 original_name = os.path.basename(
-                    original_file_obj.name
-                    if hasattr(original_file_obj, "name")
-                    else str(original_file_obj)
+                    original_file_obj.name if hasattr(original_file_obj, "name") else str(original_file_obj)
                 )
             else:
                 original_name = "subtitles.srt"

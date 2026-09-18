@@ -86,6 +86,7 @@ def test_asr_service_rlock_concurrency() -> None:
 
 def test_audio_service_lazy_ffmpeg_check(monkeypatch: pytest.MonkeyPatch) -> None:
     """验证 AudioService 在 FFmpeg 缺失时启动不会抛错崩溃，而在实际执行提取时优雅报错。"""
+
     # 模拟 ffmpeg 命令缺失
     def mock_subprocess_run(*args, **kwargs):
         raise FileNotFoundError("ffmpeg not found")
@@ -104,9 +105,7 @@ def test_audio_service_lazy_ffmpeg_check(monkeypatch: pytest.MonkeyPatch) -> Non
 
 def test_svg_icons_valid_xml_and_no_emojis() -> None:
     """验证所有 SVG 图标均为有效 SVG 字符串且不含任何 Emoji。"""
-    emoji_pattern = re.compile(
-        r"[\U00010000-\U0010ffff\u2600-\u27bf\u2300-\u23ff\u2b50-\u2b55\u200d\ufe0f]"
-    )
+    emoji_pattern = re.compile(r"[\U00010000-\U0010ffff\u2600-\u27bf\u2300-\u23ff\u2b50-\u2b55\u200d\ufe0f]")
 
     assert len(ICON_MAP) >= 12, "必须定义不少于 12 个核心矢量图标"
 
@@ -131,9 +130,7 @@ def test_locales_zero_emoji_guarantee() -> None:
     locale_files = list((root_dir / "locales").glob("*.json"))
     assert len(locale_files) == 4, f"期望找到 4 个多语言文件，实际找到 {len(locale_files)}"
 
-    emoji_pattern = re.compile(
-        r"[\U00010000-\U0010ffff\u2600-\u27bf\u2300-\u23ff\u2b50-\u2b55\u200d\ufe0f]"
-    )
+    emoji_pattern = re.compile(r"[\U00010000-\U0010ffff\u2600-\u27bf\u2300-\u23ff\u2b50-\u2b55\u200d\ufe0f]")
 
     for loc_file in locale_files:
         with open(loc_file, "r", encoding="utf-8") as f:

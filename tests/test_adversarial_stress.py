@@ -73,8 +73,7 @@ def test_dp_alignment_massive_single_block_without_separators() -> None:
     """测试超长单段文本（无 | 分隔符）的高相似度合并与低相似度安全回退。"""
     service = TranslationService()
     original_segments: list[SubtitleSegmentDict] = [
-        {"start": float(i), "end": float(i + 1), "segment": f"段落内容_{i}"}
-        for i in range(50)
+        {"start": float(i), "end": float(i + 1), "segment": f"段落内容_{i}"} for i in range(50)
     ]
 
     # 场景 A: 高相似度合并（将 50 个分段拼成一大段无 | 的文本）
@@ -124,10 +123,7 @@ def test_dp_alignment_production_chunk_size_performance() -> None:
         for i in range(chunk_size)
     ]
 
-    llm_parts = [
-        f"Token_{i}_CoreData 以及 Token_{i+1}_CoreData"
-        for i in range(0, chunk_size, 2)
-    ]
+    llm_parts = [f"Token_{i}_CoreData 以及 Token_{i + 1}_CoreData" for i in range(0, chunk_size, 2)]
     llm_text = " | ".join(llm_parts)
 
     start_time = time.perf_counter()
@@ -262,9 +258,7 @@ def test_cancellation_token_high_frequency_multi_threaded_contention() -> None:
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=num_threads + 2) as executor:
         mutator_futures = [executor.submit(worker_mutator) for _ in range(2)]
-        checker_futures = [
-            executor.submit(worker_checker, i) for i in range(num_threads)
-        ]
+        checker_futures = [executor.submit(worker_checker, i) for i in range(num_threads)]
 
         for f in mutator_futures + checker_futures:
             f.result()
@@ -416,9 +410,7 @@ def test_log_filter_large_payload_and_exception_handling() -> None:
     """测试日志过滤器处理超大消息体 (1MB 字符串) 及特殊非字符串 LogRecord 的鲁棒性。"""
     log_filter = ConfigurableFilter()
     rule_pattern = re.compile(r"CRITICAL_ERROR_CODE_\d+")
-    log_filter.message_patterns.append(
-        {"pattern": rule_pattern, "min_level": logging.ERROR}
-    )
+    log_filter.message_patterns.append({"pattern": rule_pattern, "min_level": logging.ERROR})
 
     # 1. 1MB 超大文本日志
     huge_msg = "RandomData_" * 100_000 + "CRITICAL_ERROR_CODE_999"
@@ -473,10 +465,7 @@ def test_asr_service_rlock_multi_threaded_model_lifecycle() -> None:
         return op_type
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-        futures = [
-            executor.submit(simulated_model_operation, f"op_{i}")
-            for i in range(20)
-        ]
+        futures = [executor.submit(simulated_model_operation, f"op_{i}") for i in range(20)]
         results = [f.result() for f in futures]
 
     assert len(results) == 20

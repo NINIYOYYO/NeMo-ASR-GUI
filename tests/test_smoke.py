@@ -3,6 +3,7 @@
 覆盖：全模块导入、UI 构建与事件绑定、四语言切换、
 转录流水线（假 ASR → 真实字幕生成落盘）、编辑器全链路、ZIP 打包。
 """
+
 import os
 import tempfile
 import zipfile

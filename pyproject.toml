@@ -11,6 +11,8 @@ requires-python = ">=3.10,<3.13"
 dependencies = [
     "nemo_toolkit[asr]>=2.0",
     "torch>=2.1",           # GPU 用户请先按 README 安装对应 CUDA 版本的 torch
+    "torchaudio>=2.1",
+    "torchvision>=0.16",
     "gradio>=5.29.0",
     "pydub>=0.25.1",
     "openai>=1.60,<3",

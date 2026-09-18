@@ -169,4 +169,3 @@ class Application(IApplication):
 
 # 应用程序状态与实例别名，保持与测试架构的兼容性
 AppState = Application
-

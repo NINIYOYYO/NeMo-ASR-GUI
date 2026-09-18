@@ -43,9 +43,7 @@ class TranscriptionController(ITranscriptionController):
         self.subtitle_generator: ISubtitleGenerator = subtitle_generator
         self.cancellation_token: CancellationToken = CancellationToken()
 
-        self.subtitles_folder_path: Path = (
-            Path(__file__).resolve().parent.parent / "subtitles"
-        )
+        self.subtitles_folder_path: Path = Path(__file__).resolve().parent.parent / "subtitles"
 
         # 定义格式规格：{ 内部格式名: (文件名后缀, 最终文件扩展名) }
         self.FORMAT_SPECS: dict[str, tuple[str, str]] = {
@@ -122,16 +120,10 @@ class TranscriptionController(ITranscriptionController):
                 )
                 return
 
-            input_media_path = (
-                media_file_obj.name
-                if hasattr(media_file_obj, "name")
-                else str(media_file_obj)
-            )
+            input_media_path = media_file_obj.name if hasattr(media_file_obj, "name") else str(media_file_obj)
             file_name = os.path.basename(input_media_path)
 
-            logger.info(
-                f"开始处理视频/音频文件，当前: {i + 1}/{total_files}, 文件名: {file_name}"
-            )
+            logger.info(f"开始处理视频/音频文件，当前: {i + 1}/{total_files}, 文件名: {file_name}")
             yield (
                 f"状态：正在处理文件, 当前：{i + 1}/{total_files}, 文件名：{file_name} ...",
                 None,
@@ -143,9 +135,7 @@ class TranscriptionController(ITranscriptionController):
 
             try:
                 yield f"状态：正在提取 {file_name} 的音频...", None, ""
-                extracted_audio_path = self.audio_service.extract_audio_from_video(
-                    input_media_path
-                )
+                extracted_audio_path = self.audio_service.extract_audio_from_video(input_media_path)
                 if not extracted_audio_path:
                     yield (
                         f"错误：{file_name} 音频提取失败。请检查视频文件或ffmpeg安装。正在跳过此文件。",
@@ -201,9 +191,7 @@ class TranscriptionController(ITranscriptionController):
                     )
                     continue
 
-                original_base_name = os.path.basename(input_media_path).rsplit(".", 1)[
-                    0
-                ]
+                original_base_name = os.path.basename(input_media_path).rsplit(".", 1)[0]
                 base_name = self._sanitize_filename(original_base_name)
 
                 yield f"状态：正在生成字幕文件 ({', '.join(requested_formats)})...", None, ""
@@ -218,15 +206,9 @@ class TranscriptionController(ITranscriptionController):
                         suffix, ext = self.FORMAT_SPECS.get(fmt, ("", fmt))
                         output_filename = f"{base_name}{suffix}.{ext}"
 
-                        content = self.subtitle_generator.generate_content(
-                            segment_timestamps, fmt
-                        )
-                        output_path_for_download = os.path.join(
-                            self.subtitles_folder_path, output_filename
-                        )
-                        with open(
-                            output_path_for_download, "w", encoding="utf-8"
-                        ) as subtitle_file:
+                        content = self.subtitle_generator.generate_content(segment_timestamps, fmt)
+                        output_path_for_download = os.path.join(self.subtitles_folder_path, output_filename)
+                        with open(output_path_for_download, "w", encoding="utf-8") as subtitle_file:
                             subtitle_file.write(content)
                         output_files_all.append(output_path_for_download)
 
@@ -249,15 +231,10 @@ class TranscriptionController(ITranscriptionController):
                     try:
                         os.remove(extracted_audio_path)
                     except OSError as e_clean:
-                        logger.warning(
-                            f"无法删除临时音频文件 {extracted_audio_path}: {e_clean}"
-                        )
+                        logger.warning(f"无法删除临时音频文件 {extracted_audio_path}: {e_clean}")
 
         elapsed_time_total = time.time() - start_time_total
-        status_message = (
-            f"处理完成。总耗时 {elapsed_time_total:.2f} 秒。生成 "
-            f"{len(output_files_all)} 个字幕文件。"
-        )
+        status_message = f"处理完成。总耗时 {elapsed_time_total:.2f} 秒。生成 {len(output_files_all)} 个字幕文件。"
         logger.info(status_message)
         yield (
             status_message,
@@ -290,9 +267,7 @@ class TranscriptionController(ITranscriptionController):
         try:
             with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
                 for file_obj in file_objs:
-                    file_path = (
-                        file_obj.name if hasattr(file_obj, "name") else str(file_obj)
-                    )
+                    file_path = file_obj.name if hasattr(file_obj, "name") else str(file_obj)
 
                     if os.path.exists(file_path):
                         zipf.write(file_path, arcname=os.path.basename(file_path))

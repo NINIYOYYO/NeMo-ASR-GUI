@@ -60,6 +60,7 @@ message_filters:
 
 def test_safe_stream_handler_closed_stream() -> None:
     """测试 SafeStreamHandler 在目标流已关闭时不会抛出未捕获异常。"""
+
     class MockClosedStream:
         closed = True
 

@@ -1,6 +1,7 @@
 import builtins
 import os
 import sys
+from typing import Any
 
 # 强制开启 Python UTF-8 运行环境
 os.environ["PYTHONUTF8"] = "1"
@@ -8,19 +9,21 @@ os.environ["PYTHONIOENCODING"] = "utf-8"
 
 # Windows 平台标准输出与默认文件 I/O 编码保护，防止第三方库 (如 PyTorch / NeMo) 在 GBK 环境下崩溃
 if sys.platform.startswith("win"):
-    sys.stdout.reconfigure(encoding="utf-8")
-    sys.stderr.reconfigure(encoding="utf-8")
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+    if hasattr(sys.stderr, "reconfigure"):
+        sys.stderr.reconfigure(encoding="utf-8")
     _original_open = builtins.open
 
-    def _safe_utf8_open(*args, **kwargs):  # type: ignore[no-untyped-def]
+    def _safe_utf8_open(*args: Any, **kwargs: Any) -> Any:
         """在 Windows 平台下为文本模式 open() 注入默认 UTF-8 编码。
 
         Args:
-            *args: 位置参数。
-            **kwargs: 关键字参数。
+            *args (Any): 位置参数。
+            **kwargs (Any): 关键字参数。
 
         Returns:
-            IO 句柄实例。
+            Any: IO 句柄实例。
         """
         mode = kwargs.get("mode", args[1] if len(args) > 1 else "r")
         if "b" not in str(mode) and "encoding" not in kwargs:
@@ -61,8 +64,3 @@ if __name__ == "__main__":
     app = create_app()
     app.run()
     logger.info("ASR 应用程序已关闭。")
-
-
-
-
-

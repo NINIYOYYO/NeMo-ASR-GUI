@@ -68,9 +68,7 @@ class SubtitleService(ISubtitleGenerator):
         secs, milliseconds = divmod(rem, MS_PER_SECOND)
         return f"{hours:02}:{minutes:02}:{secs:02}{separator}{milliseconds:03}"
 
-    def _generate_srt(
-        self, segment_timestamps: list[SubtitleSegmentDict] | list[dict[str, Any]]
-    ) -> str:
+    def _generate_srt(self, segment_timestamps: list[SubtitleSegmentDict] | list[dict[str, Any]]) -> str:
         """根据时间戳列表生成标准 SRT 格式字幕。
 
         Args:
@@ -85,9 +83,7 @@ class SubtitleService(ISubtitleGenerator):
         ]
         return "".join(blocks)
 
-    def _generate_vtt(
-        self, segment_timestamps: list[SubtitleSegmentDict] | list[dict[str, Any]]
-    ) -> str:
+    def _generate_vtt(self, segment_timestamps: list[SubtitleSegmentDict] | list[dict[str, Any]]) -> str:
         """根据时间戳列表生成 WebVTT 格式字幕。
 
         Args:
@@ -104,9 +100,7 @@ class SubtitleService(ISubtitleGenerator):
             blocks.append(f"{start_time_vtt} --> {end_time_vtt}\n{segment_text}\n\n")
         return "".join(blocks)
 
-    def _generate_txt(
-        self, segment_timestamps: list[SubtitleSegmentDict] | list[dict[str, Any]]
-    ) -> str:
+    def _generate_txt(self, segment_timestamps: list[SubtitleSegmentDict] | list[dict[str, Any]]) -> str:
         """根据时间戳列表生成纯文本 TXT 字幕。
 
         Args:
@@ -117,9 +111,7 @@ class SubtitleService(ISubtitleGenerator):
         """
         return "\n".join(str(s.get("segment", s.get("text", ""))).strip() for s in segment_timestamps)
 
-    def _generate_json(
-        self, segment_timestamps: list[SubtitleSegmentDict] | list[dict[str, Any]]
-    ) -> str:
+    def _generate_json(self, segment_timestamps: list[SubtitleSegmentDict] | list[dict[str, Any]]) -> str:
         """根据时间戳列表生成 JSON 格式字幕数据。
 
         Args:
@@ -130,9 +122,7 @@ class SubtitleService(ISubtitleGenerator):
         """
         return json.dumps(segment_timestamps, ensure_ascii=False, indent=4)
 
-    def _generate_lrc(
-        self, segment_timestamps: list[SubtitleSegmentDict] | list[dict[str, Any]]
-    ) -> str:
+    def _generate_lrc(self, segment_timestamps: list[SubtitleSegmentDict] | list[dict[str, Any]]) -> str:
         """根据时间戳列表生成歌词 LRC 格式字幕。
 
         Args:
@@ -151,9 +141,7 @@ class SubtitleService(ISubtitleGenerator):
             lines.append(f"[{minutes:02}:{seconds:02}.{milliseconds:02}]{segment_text}\n")
         return "".join(lines)
 
-    def _generate_word_srt(
-        self, segment_timestamps: list[SubtitleSegmentDict] | list[dict[str, Any]]
-    ) -> str:
+    def _generate_word_srt(self, segment_timestamps: list[SubtitleSegmentDict] | list[dict[str, Any]]) -> str:
         """生成逐词级 SRT：每个词作为独立字幕块。
 
         Args:
@@ -198,9 +186,7 @@ class SubtitleService(ISubtitleGenerator):
 
         return "".join(blocks)
 
-    def _generate_char_srt(
-        self, segment_timestamps: list[SubtitleSegmentDict] | list[dict[str, Any]]
-    ) -> str:
+    def _generate_char_srt(self, segment_timestamps: list[SubtitleSegmentDict] | list[dict[str, Any]]) -> str:
         """生成逐字级 SRT：每个字符作为独立字幕块。
 
         Args:
@@ -245,9 +231,7 @@ class SubtitleService(ISubtitleGenerator):
 
         return "".join(blocks)
 
-    def _generate_ass(
-        self, segment_timestamps: list[SubtitleSegmentDict] | list[dict[str, Any]]
-    ) -> str:
+    def _generate_ass(self, segment_timestamps: list[SubtitleSegmentDict] | list[dict[str, Any]]) -> str:
         """生成 ASS 格式字幕内容。
 
         Args:
@@ -305,9 +289,7 @@ class SubtitleService(ISubtitleGenerator):
 
         return f"{hours}:{minutes:02}:{secs:02}.{centiseconds:02}"
 
-    def _render_srt_block(
-        self, index: int, start: float, end: float, text: str
-    ) -> str:
+    def _render_srt_block(self, index: int, start: float, end: float, text: str) -> str:
         """渲染单个 SRT 字幕块。
 
         Args:
@@ -365,10 +347,7 @@ class SubtitleService(ISubtitleGenerator):
         hours, mins, secs_ms = time_str.split(":")
         secs, ms = secs_ms.split(",")
         return (
-            int(hours) * SECONDS_PER_HOUR
-            + int(mins) * SECONDS_PER_MINUTE
-            + int(secs)
-            + int(ms) / float(MS_PER_SECOND)
+            int(hours) * SECONDS_PER_HOUR + int(mins) * SECONDS_PER_MINUTE + int(secs) + int(ms) / float(MS_PER_SECOND)
         )
 
     # --- 向后兼容别名 ---
