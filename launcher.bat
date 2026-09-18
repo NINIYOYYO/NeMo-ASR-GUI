@@ -114,6 +114,10 @@ echo %MSG_TIP_TIME%
 echo ========================================================
 echo.
 
+REM 设置 UTF-8 运行环境
+set PYTHONUTF8=1
+set PYTHONIOENCODING=utf-8
+
 REM 启动 Python 主程序
 python main.py
 

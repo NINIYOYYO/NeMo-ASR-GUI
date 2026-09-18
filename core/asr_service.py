@@ -65,6 +65,29 @@ class ASRService(IASRService):
         global nemo_asr
         if nemo_asr is None:
             try:
+                import builtins
+                import sys
+
+                if sys.platform.startswith("win"):
+                    _orig_open = builtins.open
+
+                    def _safe_open(*args: Any, **kwargs: Any) -> Any:
+                        """在 Windows 平台下为 open() 注入默认 UTF-8 编码。
+
+                        Args:
+                            *args (Any): 位置参数。
+                            **kwargs (Any): 关键字参数。
+
+                        Returns:
+                            Any: 打开的文件对象。
+                        """
+                        mode = kwargs.get("mode", args[1] if len(args) > 1 else "r")
+                        if "b" not in str(mode) and "encoding" not in kwargs:
+                            kwargs["encoding"] = "utf-8"
+                        return _orig_open(*args, **kwargs)
+
+                    builtins.open = _safe_open
+
                 import nemo.collections.asr as imported_nemo_asr
 
                 nemo_asr = imported_nemo_asr
