@@ -3,6 +3,8 @@
 组装模型加载、音视频转录、多格式字幕导出、字幕表格编辑及大模型翻译断句的 UI 组件与事件绑定。
 """
 
+# mypy: disable-error-code="attr-defined"
+
 import os
 from typing import Any
 

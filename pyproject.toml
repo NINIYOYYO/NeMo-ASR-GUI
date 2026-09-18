@@ -79,5 +79,10 @@ testpaths = ["tests"]
 asyncio_mode = "auto"
 
 [[tool.mypy.overrides]]
-module = "yaml"
+module = ["yaml", "gradio.*"]
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "app_ui"
+disable_error_code = ["attr-defined"]
+

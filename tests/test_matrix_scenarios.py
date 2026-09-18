@@ -1024,14 +1024,27 @@ def test_translator_multilingual_locale_switching() -> None:
     set_language(DEFAULT_LANGUAGE)
 
 
-def test_app_ui_language_switch_event_zero_emoji() -> None:
+def test_app_ui_language_switch_event_zero_emoji(tmp_path: Path) -> None:
     """测试 app_ui.create_ui 中的 change_language 回调在 4 种语言切换时返回的所有 UI 组件更新值绝对不含 Emoji。"""
     from app_ui import create_ui
-    from application import AppState
+    from application import Application
+    from core.audio_processor import AudioService
+    from core.subtitle_generator import SubtitleService
+    from utils.config_manager import ConfigManager
 
     emoji_regex = re.compile(r"[\U00010000-\U0010ffff\u2600-\u27bf\u2300-\u23ff\u2b50-\u2b55\u200d\ufe0f]")
 
-    app = AppState()
+    cfg = ConfigManager(base_dir=str(tmp_path))
+    fake_asr = MagicMock()
+    fake_asr.load_model_from_ngc.return_value = "Mocked NGC model loaded"
+    fake_asr.load_model_from_local.return_value = "Mocked local model loaded"
+
+    app = Application(
+        config_manager=cfg,
+        asr_service=fake_asr,
+        audio_service=AudioService(),
+        subtitle_generator=SubtitleService(),
+    )
     demo = create_ui(app)
     assert demo is not None
 
