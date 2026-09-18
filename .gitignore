@@ -1,23 +1,73 @@
+# Python 虚拟环境与运行时
 .venv/
-.gradio/
+venv/
+ENV/
+env/
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
 
-# 用户配置（包含 API Key 等敏感信息，切勿提交）
+# 缓存与静态分析工具
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Gradio 缓存
+.gradio/
+
+# 用户私密配置（包含 API Key、LLM 配置，严禁提交）
 config.json
 corrections.json
+.env
+.env.*
 
-# 运行产物
+# 运行日志与字幕导出产物
 logs/
 subtitles/
+*.log
 
-# 模型文件（体积过大）
+# 临时测试音视频与解压归档（防止误提交大文件）
+*.wav
+*.mp3
+*.mp4
+*.mkv
+*.flac
+*.aac
+*.avi
+*.mov
+*.zip
+*.tar
+*.tar.gz
+*.tmp
+*.temp
+
+# 模型权重与大二进制文件（体积过大，严禁提交）
 *.nemo
+*.pt
+*.pth
+*.bin
+*.ckpt
+*.safetensors
+*.onnx
 models--*/
+models/
 wheels/
+*.whl
 
-# 历史实验脚本与待删除文件（不入库）
+# 历史实验脚本与 Agent 内部产物
 experiments/
 _to_delete/
 .agents/
+
+# IDE 与操作系统临时文件
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+Desktop.ini
 
